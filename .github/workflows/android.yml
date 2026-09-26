@@ -21,29 +21,43 @@ jobs:
 
       - name: Extract project
         run: |
-          mkdir build_project
+          mkdir -p build_project
           unzip -q MughalMuscatCarBid_Complete_Android_Project.zip -d build_project
           echo "Project files:"
           find build_project -maxdepth 3 -type f | head -100
 
       - name: Find Android project
         run: |
-          PROJECT_DIR=$(find build_project -name settings.gradle -o -name settings.gradle.kts | head -1 | xargs dirname)
-          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+          PROJECT_DIR=$(find build_project \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit | xargs dirname)
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
 
+      - name: Fix Kotlin duplicate dependencies
+        run: |
+          cat > "$RUNNER_TEMP/force-kotlin.gradle" <<'EOF'
+          allprojects {
+            configurations.all {
+              resolutionStrategy.eachDependency { details ->
+                if (details.requested.group == "org.jetbrains.kotlin") {
+                  details.useVersion "1.8.22"
+                }
+              }
+            }
+          }
+          EOF
+
       - name: Build APK
         run: |
           cd "$PROJECT_DIR"
           if [ -f "./gradlew" ]; then
             chmod +x ./gradlew
-            ./gradlew assembleDebug
+            ./gradlew --init-script "$RUNNER_TEMP/force-kotlin.gradle" assembleDebug
           else
-            gradle assembleDebug
+            gradle --init-script "$RUNNER_TEMP/force-kotlin.gradle" assembleDebug
           fi
 
       - name: Upload APK
