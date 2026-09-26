@@ -17,16 +17,18 @@ header{padding:18px;border-bottom:1px solid #e7ebf2;position:sticky;top:0;backgr
 .sub{font-size:11px;color:#666}
 .hero{margin:14px;border-radius:15px;background:linear-gradient(135deg,#071a31,#0d6bd6);color:white;padding:18px}
 .hero h2{margin:0 0 7px}
-.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:700;background:#0b63ce;color:white}
+.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:700;background:#0b63ce;color:white;cursor:pointer}
 .btn.alt{background:white;color:#0b63ce}
+.btn.red{background:#c62828}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px}
 .cat{padding:12px 5px;border:1px solid #e8edf4;border-radius:12px;text-align:center;font-size:11px}
 .cat b{display:block;font-size:23px;margin-bottom:5px}
 section{padding:0 14px}
 .title{display:flex;justify-content:space-between;align-items:center;margin:18px 0 10px}
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.card{border:1px solid #e3e8ef;border-radius:12px;overflow:hidden}
-.carimg{height:110px;background:#dfe8f2;display:flex;align-items:center;justify-content:center;font-size:42px}
+.card{border:1px solid #e3e8ef;border-radius:12px;overflow:hidden;background:#fff}
+.carimg{height:150px;background:#dfe8f2;display:flex;align-items:center;justify-content:center;font-size:42px;overflow:hidden}
+.carimg img{width:100%;height:100%;object-fit:cover}
 .card .p{padding:9px}
 .price{font-weight:800;color:#0b63ce;margin-top:5px}
 .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:520px;width:100%;display:flex;background:#fff;border-top:1px solid #ddd;z-index:4}
@@ -34,7 +36,7 @@ section{padding:0 14px}
 .page{padding-bottom:75px}
 .row{display:flex;gap:9px}
 .field{width:100%;padding:12px;border:1px solid #dce2ea;border-radius:10px;margin:7px 0;background:#fff}
-.list{border:1px solid #e4e9f0;border-radius:12px;padding:12px;margin:8px 0}
+.list{border:1px solid #e4e9f0;border-radius:12px;padding:12px;margin:8px 0;background:#fff}
 .danger{color:#c62828}
 .ok{color:#168447}
 .login{min-height:100vh;background:linear-gradient(160deg,#0a1e36,#0b63ce 60%,#f2f7ff);display:flex;align-items:center;justify-content:center;padding:22px}
@@ -42,6 +44,12 @@ section{padding:0 14px}
 .logoBig{font-size:27px;font-weight:900}
 .muted{color:#687385;font-size:12px}
 .pill{display:inline-block;background:#eaf3ff;color:#0b63ce;padding:5px 8px;border-radius:8px;font-size:11px}
+.gallery{display:flex;gap:7px;overflow-x:auto;margin:10px 0}
+.gallery img{width:85px;height:70px;object-fit:cover;border-radius:8px}
+.stat{display:inline-block;width:48%;padding:14px;border:1px solid #e4e9f0;border-radius:12px;margin:1%;text-align:center}
+.stat b{display:block;font-size:22px;color:#0b63ce}
+textarea{min-height:90px;resize:vertical}
+.loading{text-align:center;padding:30px;color:#687385}
 </style>
 </head>
 
@@ -66,392 +74,474 @@ const db=firebase.firestore();
 let me=null;
 let page="home";
 let ads=[];
+let myAds=[];
+let pendingUsers=[];
+let unsubscribeAds=null;
 
 function esc(s){
  return String(s||"").replace(/[&<>"']/g,m=>({
- "&":"&amp;","<":"&lt;",">":"&gt;",
- '"':"&quot;","'":"&#39;"
+ "&":"&amp;",
+ "<":"&lt;",
+ ">":"&gt;",
+ '"':"&quot;",
+ "'":"&#39;"
  }[m]));
 }
 
-function showLogin(){
+function showLogin(message=""){
  document.getElementById("root").innerHTML=`
  <div class="login">
- <div class="loginbox">
- <div class="logoBig">
- MUGHAL<br><span style="color:#0b63ce">MUSCAT CAR BID</span>
- </div>
- <p class="muted">Buy • Sell • Bid • Deliver</p>
- <input class="field" id="email" placeholder="Email">
- <input class="field" id="pass" type="password" placeholder="Password">
- <button class="btn" style="width:100%" onclick="login()">Login</button>
- <p id="err" class="danger"></p>
- <hr>
- <p class="muted">New user?</p>
- <button class="btn alt" onclick="showRegister()">Create account</button>
- </div>
+  <div class="loginbox">
+   <div class="logoBig">
+    MUGHAL<br><span style="color:#0b63ce">MUSCAT CAR BID</span>
+   </div>
+
+   <p class="muted">Buy • Sell • Bid • Deliver</p>
+
+   <input class="field" id="email" type="email" placeholder="Email">
+   <input class="field" id="pass" type="password" placeholder="Password">
+
+   <button class="btn" style="width:100%" onclick="login()">Login</button>
+
+   <p id="err" class="danger">${esc(message)}</p>
+
+   <hr>
+
+   <p class="muted">New user?</p>
+
+   <button class="btn alt" onclick="showRegister()">
+    Create account
+   </button>
+  </div>
  </div>`;
 }
 
 function showRegister(){
  document.getElementById("root").innerHTML=`
  <div class="login">
- <div class="loginbox">
- <div class="logoBig">Create Account</div>
- <p class="muted">Admin approval is required.</p>
- <input class="field" id="rname" placeholder="Full name">
- <input class="field" id="remail" placeholder="Email">
- <input class="field" id="rpass" type="password" placeholder="Password">
- <button class="btn" style="width:100%" onclick="register()">Submit for approval</button>
- <button class="field" onclick="showLogin()">Back to login</button>
- <p id="rerr" class="danger"></p>
- </div>
+  <div class="loginbox">
+
+   <div class="logoBig">Create Account</div>
+
+   <p class="muted">
+    Your account will be sent to admin for approval.
+   </p>
+
+   <input class="field" id="rname" placeholder="Full name">
+
+   <input class="field" id="remail" type="email" placeholder="Email">
+
+   <input class="field" id="rpass" type="password" placeholder="Password">
+
+   <button class="btn" style="width:100%" onclick="register()">
+    Submit for approval
+   </button>
+
+   <button class="field" onclick="showLogin()">
+    Back to login
+   </button>
+
+   <p id="rerr" class="danger"></p>
+  </div>
  </div>`;
 }
 
 async function register(){
+
  const name=document.getElementById("rname").value.trim();
  const email=document.getElementById("remail").value.trim();
  const pass=document.getElementById("rpass").value;
 
- if(!name||!email||!pass){
-  document.getElementById("rerr").textContent="Please fill all fields.";
+ if(!name || !email || !pass){
+  document.getElementById("rerr").textContent=
+   "Please fill all fields.";
   return;
  }
 
  if(pass.length<6){
-  document.getElementById("rerr").textContent="Password must be at least 6 characters.";
+  document.getElementById("rerr").textContent=
+   "Password must be at least 6 characters.";
   return;
  }
 
  try{
-  const cred=await auth.createUserWithEmailAndPassword(email,pass);
 
-  await db.collection("users").doc(cred.user.uid).set({
-   name:name,
-   email:email,
-   role:"user",
-   status:"pending",
-   createdAt:firebase.firestore.FieldValue.serverTimestamp()
-  });
+  const cred=await auth.createUserWithEmailAndPassword(
+   email,
+   pass
+  );
+
+  await db.collection("users")
+   .doc(cred.user.uid)
+   .set({
+    name:name,
+    email:email,
+    role:"user",
+    status:"pending",
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+   });
 
   await auth.signOut();
 
-  alert("Account created. Admin approval is required.");
-  showLogin();
+  showLogin(
+   "Account created. Waiting for admin approval."
+  );
 
  }catch(e){
+
   document.getElementById("rerr").textContent=e.message;
+
  }
 }
 
+async function getUserProfile(uid){
+
+ let snap=
+  await db.collection("users").doc(uid).get();
+
+ if(snap.exists){
+  return {
+   uid:uid,
+   ...snap.data()
+  };
+ }
+
+ snap=
+  await db.collection("User").doc(uid).get();
+
+ if(snap.exists){
+  return {
+   uid:uid,
+   ...snap.data()
+  };
+ }
+
+ return null;
+}
+
 async function login(){
+
  const email=document.getElementById("email").value.trim();
  const pass=document.getElementById("pass").value;
  const err=document.getElementById("err");
 
+ err.textContent="";
+
+ if(!email || !pass){
+  err.textContent="Enter email and password.";
+  return;
+ }
+
  try{
-  const cred=await auth.signInWithEmailAndPassword(email,pass);
-  const snap=await db.collection("users").doc(cred.user.uid).get();
 
-  if(!snap.exists){
+  const cred=
+   await auth.signInWithEmailAndPassword(
+    email,
+    pass
+   );
+
+  const profile=
+   await getUserProfile(cred.user.uid);
+
+  if(!profile){
+
    await auth.signOut();
-   err.textContent="Account profile not found.";
+
+   err.textContent=
+    "Account profile not found in Firestore.";
+
    return;
   }
 
-  const u=snap.data();
+  const status=
+   String(profile.status||"").toLowerCase();
 
-  if(u.status!=="approved"){
+  if(profile.role!=="admin" && status!=="approved"){
+
    await auth.signOut();
-   err.textContent="Your account is waiting for admin approval.";
+
+   err.textContent=
+    "Your account is waiting for admin approval.";
+
    return;
   }
 
-  me={uid:cred.user.uid,...u};
+  me=profile;
+
+  page="home";
+
   loadAds();
+
   render();
 
  }catch(e){
-  err.textContent="Invalid email or password.";
+
+  console.error(e);
+
+  err.textContent=
+   "Invalid email or password.";
+
  }
 }
 
 function loadAds(){
- db.collection("ads")
- .where("status","==","active")
- .onSnapshot(snapshot=>{
-  ads=[];
-  snapshot.forEach(doc=>{
-   ads.push({id:doc.id,...doc.data()});
-  });
-  if(me) render();
- });
+
+ if(unsubscribeAds){
+  unsubscribeAds();
+  unsubscribeAds=null;
+ }
+
+ unsubscribeAds=
+  db.collection("ads")
+   .where("status","==","active")
+   .onSnapshot(snapshot=>{
+
+    ads=[];
+
+    snapshot.forEach(doc=>{
+     ads.push({
+      id:doc.id,
+      ...doc.data()
+     });
+    });
+
+    ads.sort((a,b)=>{
+     const at=
+      a.createdAt?.seconds || 0;
+     const bt=
+      b.createdAt?.seconds || 0;
+
+     return bt-at;
+    });
+
+    if(me){
+     render();
+    }
+
+   },error=>{
+
+    console.error(error);
+
+   });
 }
 
 function render(){
+
  document.getElementById("root").innerHTML=`
  <div class="app page">
- <header>
- <div class="logo">MUGHAL MUSCAT CAR BID</div>
- <div class="sub">Muscat, Oman • Buy • Sell • Bid • Deliver</div>
- </header>
 
- <div id="content"></div>
+  <header>
+   <div class="logo">
+    MUGHAL MUSCAT CAR BID
+   </div>
 
- <div class="nav">
- <button onclick="go('home')">⌂<br>Home</button>
- <button onclick="go('cars')">🚗<br>Cars</button>
- <button onclick="go('post')">＋<br>Post Ad</button>
- <button onclick="go('profile')">♙<br>Profile</button>
- </div>
+   <div class="sub">
+    Muscat, Oman • Buy • Sell • Bid • Deliver
+   </div>
+  </header>
+
+  <div id="content"></div>
+
+  <div class="nav">
+   <button onclick="go('home')">
+    ⌂<br>Home
+   </button>
+
+   <button onclick="go('cars')">
+    🚗<br>Cars
+   </button>
+
+   <button onclick="go('post')">
+    ＋<br>Post Ad
+   </button>
+
+   <button onclick="go('profile')">
+    ♙<br>Profile
+   </button>
+  </div>
+
  </div>`;
 
  go(page);
 }
 
 function go(p){
+
  page=p;
+
  const c=document.getElementById("content");
+
  if(!c)return;
 
  if(p==="home")c.innerHTML=home();
+
  if(p==="cars")c.innerHTML=cars();
+
  if(p==="post")c.innerHTML=post();
+
  if(p==="profile")c.innerHTML=profile();
- if(p==="admin")c.innerHTML=admin();
+
+ if(p==="admin")admin();
+
+ if(p==="myads")myAdsPage();
 }
 
 function home(){
+
  return `
  <div class="hero">
- <h2>Find Your Dream Car</h2>
- <p>Bid • Buy • Sell • Deliver across Oman</p>
- <button class="btn alt" onclick="go('cars')">View Cars</button>
+
+  <h2>Find Your Dream Car</h2>
+
+  <p>
+   Bid • Buy • Sell • Deliver across Oman
+  </p>
+
+  <button class="btn alt"
+   onclick="go('cars')">
+   View Cars
+  </button>
+
  </div>
 
  <div class="grid">
- <div class="cat" onclick="go('cars')"><b>🚗</b>Cars</div>
- <div class="cat"><b>🏍️</b>Bikes</div>
- <div class="cat"><b>📱</b>Mobiles</div>
- <div class="cat"><b>💻</b>Electronics</div>
- <div class="cat"><b>🛋️</b>Furniture</div>
- <div class="cat"><b>🏠</b>Property</div>
- <div class="cat"><b>💼</b>Jobs</div>
- <div class="cat"><b>•••</b>More</div>
+
+  <div class="cat" onclick="go('cars')">
+   <b>🚗</b>Cars
+  </div>
+
+  <div class="cat">
+   <b>🏍️</b>Bikes
+  </div>
+
+  <div class="cat">
+   <b>📱</b>Mobiles
+  </div>
+
+  <div class="cat">
+   <b>💻</b>Electronics
+  </div>
+
+  <div class="cat">
+   <b>🛋️</b>Furniture
+  </div>
+
+  <div class="cat">
+   <b>🏠</b>Property
+  </div>
+
+  <div class="cat">
+   <b>💼</b>Jobs
+  </div>
+
+  <div class="cat">
+   <b>•••</b>More
+  </div>
+
  </div>
 
  <section>
- <div class="title">
- <h3>Featured Cars</h3>
- <button class="btn" onclick="go('cars')">See All</button>
- </div>
 
- <div class="cards">
- ${ads.slice(0,4).map(card).join("")}
- </div>
+  <div class="title">
+   <h3>Featured Cars</h3>
+
+   <button class="btn"
+    onclick="go('cars')">
+    See All
+   </button>
+  </div>
+
+  <div class="cards">
+   ${ads.slice(0,4).map(card).join("")}
+  </div>
+
+  ${
+   ads.length===0
+   ?'<p class="muted">No cars posted yet.</p>'
+   :''
+  }
+
  </section>`;
 }
 
 function card(a){
+
+ const image=
+  a.images && a.images.length
+   ?`<img src="${a.images[0]}">`
+   :'🚘';
+
  return `
- <div class="card" onclick="detail('${a.id}')">
- <div class="carimg">🚘</div>
- <div class="p">
- <b>${esc(a.title)}</b>
- <div class="price">OMR ${Number(a.price||0).toLocaleString()}</div>
- <small>📍 ${esc(a.city||"Muscat")}</small>
- </div>
+ <div class="card"
+  onclick="detail('${a.id}')">
+
+  <div class="carimg">
+   ${image}
+  </div>
+
+  <div class="p">
+
+   <b>${esc(a.title)}</b>
+
+   <div class="price">
+    OMR ${Number(a.price||0).toLocaleString()}
+   </div>
+
+   <small>
+    📍 ${esc(a.city||"Muscat")}
+   </small>
+
+  </div>
+
  </div>`;
 }
 
 function cars(){
+
  return `
  <section>
- <div class="title">
- <h3>Cars</h3>
- <button class="btn" onclick="go('post')">＋ Post Ad</button>
- </div>
 
- ${ads.map(a=>`
- <div class="list" onclick="detail('${a.id}')">
- <div class="row">
- <div style="font-size:40px">🚘</div>
- <div>
- <b>${esc(a.title)}</b>
- <div class="price">OMR ${Number(a.price||0).toLocaleString()}</div>
- <small>📍 ${esc(a.city||"Muscat")}</small>
- </div>
- </div>
- </div>
- `).join("")}
+  <div class="title">
+   <h3>Cars</h3>
 
- ${ads.length===0?'<p class="muted">No cars posted yet.</p>':""}
- </section>`;
-}
+   <button class="btn"
+    onclick="go('post')">
+    ＋ Post Ad
+   </button>
+  </div>
 
-function detail(id){
- const a=ads.find(x=>x.id===id);
- if(!a)return;
+  ${ads.map(a=>{
 
- document.getElementById("root").insertAdjacentHTML("beforeend",`
- <div style="position:fixed;inset:0;background:#0008;z-index:10;display:flex;align-items:flex-end"
- onclick="this.remove()">
- <div style="background:white;border-radius:18px 18px 0 0;width:100%;padding:18px"
- onclick="event.stopPropagation()">
+   const image=
+    a.images && a.images.length
+     ?`<img src="${a.images[0]}"
+        style="width:90px;height:70px;object-fit:cover;border-radius:8px">`
+     :'🚘';
 
- <h2>${esc(a.title)}</h2>
- <div class="carimg">🚘</div>
- <h2 class="price">OMR ${Number(a.price||0).toLocaleString()}</h2>
- <p>📍 ${esc(a.city||"Muscat")}</p>
- <p>${esc(a.desc||"Vehicle listing")}</p>
+   return `
+   <div class="list"
+    onclick="detail('${a.id}')">
 
- <button class="btn" onclick="bid('${a.id}')">Place Bid</button>
- <button class="field" onclick="this.closest('[style*=fixed]').remove()">Close</button>
+    <div class="row">
 
- </div>
- </div>`);
-}
+     <div style="font-size:40px">
+      ${image}
+     </div>
 
-async function bid(id){
- const a=ads.find(x=>x.id===id);
- if(!a)return;
+     <div>
 
- const value=prompt("Enter your bid in OMR",a.price);
- if(!value)return;
+      <b>${esc(a.title)}</b>
 
- const amount=Number(value);
- if(!amount)return;
+      <div class="price">
+       OMR ${Number(a.price||0).toLocaleString()}
+      </div>
 
- await db.collection("ads").doc(id).collection("bids").add({
-  userId:me.uid,
-  userName:me.name,
-  amount:amount,
-  createdAt:firebase.firestore.FieldValue.serverTimestamp()
- });
+      <small>
+       📍 ${esc(a.city||"Muscat")}
+      </small>
 
- alert("Bid submitted.");
-}
+     </div>
 
-function post(){
- return `
- <section>
- <div class="title"><h3>Post Ad</h3></div>
+    </div>
 
- <input class="field" id="ptitle" placeholder="Toyota Corolla 2021">
- <input class="field" id="pprice" type="number" placeholder="Price OMR">
- <input class="field" id="pcity" placeholder="Location" value="Muscat">
- <textarea class="field" id="pdesc" placeholder="Description"></textarea>
-
- <label class="field" style="display:block">
- Vehicle photos
- <input type="file" accept="image/*" multiple>
- </label>
-
- <button class="btn" style="width:100%" onclick="addAd()">Submit Ad</button>
- </section>`;
-}
-
-async function addAd(){
- const title=document.getElementById("ptitle").value.trim();
- const price=Number(document.getElementById("pprice").value);
- const city=document.getElementById("pcity").value.trim()||"Muscat";
- const desc=document.getElementById("pdesc").value.trim();
-
- if(!title||!price){
-  alert("Title and price are required.");
-  return;
- }
-
- await db.collection("ads").add({
-  title:title,
-  price:price,
-  city:city,
-  desc:desc,
-  type:"Cars",
-  ownerId:me.uid,
-  ownerName:me.name,
-  status:"active",
-  createdAt:firebase.firestore.FieldValue.serverTimestamp()
- });
-
- alert("Ad posted online.");
- go("cars");
-}
-
-function profile(){
- return `
- <section>
- <div class="title"><h3>My Profile</h3></div>
-
- <div class="list">
- <b>${esc(me.name)}</b>
- <p>${esc(me.email)}</p>
- <span class="pill">${esc(me.role)}</span>
- </div>
-
- <div class="list" onclick="go('post')">My Ads ›</div>
-
- ${me.role==="admin"
- ?'<div class="list" onclick="go(\'admin\')">⚙ Admin Panel ›</div>'
- :""}
-
- <button class="field" onclick="logout()">Logout</button>
- </section>`;
-}
-
-async function admin(){
- if(me.role!=="admin")return;
-
- let html=`
- <section>
- <div class="title"><h3>Admin Panel</h3></div>
- <div id="pendingUsers">Loading users...</div>
- </section>`;
-
- document.getElementById("content").innerHTML=html;
-
- const snap=await db.collection("users").where("status","==","pending").get();
-
- let out="";
-
- snap.forEach(doc=>{
-  const u=doc.data();
-
-  out+=`
-  <div class="list">
-  <b>${esc(u.name)}</b><br>
-  <small>${esc(u.email)}</small><br><br>
-  <button class="btn" onclick="approve('${doc.id}')">Approve</button>
-  </div>`;
- });
-
- if(!out)out='<p class="ok">No pending approvals.</p>';
-
- document.getElementById("pendingUsers").innerHTML=out;
-}
-
-async function approve(uid){
- await db.collection("users").doc(uid).update({
-  status:"approved"
- });
-
- alert("User approved.");
- admin();
-}
-
-async function logout(){
- await auth.signOut();
- me=null;
- ads=[];
- showLogin();
-}
-
-auth.onAuthStateChanged(async user=>{
- if(!user){
-  showLogin();
- }
-});
-</script>
-</body>
-</html>
+   </div
