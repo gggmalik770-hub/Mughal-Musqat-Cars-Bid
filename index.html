@@ -3,92 +3,455 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Mughal Muscat Car Bid</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#102033}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#102033}
 .app{max-width:520px;margin:auto;min-height:100vh;background:#fff}
-header{padding:18px 18px 10px;border-bottom:1px solid #e7ebf2;position:sticky;top:0;background:#fff;z-index:3}
-.logo{font-weight:900;font-size:20px;color:#0b63ce}.sub{font-size:11px;color:#666}
-.search{margin-top:12px;border:1px solid #dce2ea;border-radius:12px;padding:11px;background:#f8fafc}
+header{padding:18px;border-bottom:1px solid #e7ebf2;position:sticky;top:0;background:#fff;z-index:3}
+.logo{font-weight:900;font-size:20px;color:#0b63ce}
+.sub{font-size:11px;color:#666}
 .hero{margin:14px;border-radius:15px;background:linear-gradient(135deg,#071a31,#0d6bd6);color:white;padding:18px}
-.hero h2{margin:0 0 7px;font-size:22px}.hero p{margin:0 0 12px;font-size:13px}.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:700;background:#0b63ce;color:white;cursor:pointer}.btn.alt{background:white;color:#0b63ce}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 14px}.cat{padding:12px 5px;border:1px solid #e8edf4;border-radius:12px;text-align:center;font-size:11px}.cat b{display:block;font-size:23px;margin-bottom:5px}
-section{padding:0 14px}.title{display:flex;justify-content:space-between;align-items:center;margin:18px 0 10px}.title h3{margin:0}
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}.card{border:1px solid #e3e8ef;border-radius:12px;overflow:hidden;background:#fff}.carimg{height:110px;background:#dfe8f2;display:flex;align-items:center;justify-content:center;font-size:42px}.card .p{padding:9px}.price{font-weight:800;color:#0b63ce;margin-top:5px}
-.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:520px;width:100%;display:flex;background:#fff;border-top:1px solid #ddd;z-index:4}.nav button{flex:1;border:0;background:#fff;padding:10px 3px;font-size:10px;color:#667}.nav button.active{color:#0b63ce;font-weight:800}
-.page{padding-bottom:75px}.hidden{display:none}.row{display:flex;gap:9px}.field{width:100%;padding:12px;border:1px solid #dce2ea;border-radius:10px;margin:7px 0;background:#fff}.pill{display:inline-block;background:#eaf3ff;color:#0b63ce;padding:5px 8px;border-radius:8px;font-size:11px}.list{border:1px solid #e4e9f0;border-radius:12px;padding:12px;margin:8px 0}.danger{color:#c62828}.ok{color:#168447}.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:flex-end;z-index:10}.sheet{background:white;border-radius:18px 18px 0 0;width:100%;padding:18px;max-height:90vh;overflow:auto}
-.login{min-height:100vh;background:linear-gradient(160deg,#0a1e36,#0b63ce 60%,#f2f7ff);display:flex;align-items:center;justify-content:center;padding:22px}.loginbox{background:white;border-radius:20px;padding:24px;width:100%;max-width:420px;text-align:center}.logoBig{font-size:28px;font-weight:900}.muted{color:#687385;font-size:12px}
+.hero h2{margin:0 0 7px}
+.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:700;background:#0b63ce;color:white}
+.btn.alt{background:white;color:#0b63ce}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px}
+.cat{padding:12px 5px;border:1px solid #e8edf4;border-radius:12px;text-align:center;font-size:11px}
+.cat b{display:block;font-size:23px;margin-bottom:5px}
+section{padding:0 14px}
+.title{display:flex;justify-content:space-between;align-items:center;margin:18px 0 10px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{border:1px solid #e3e8ef;border-radius:12px;overflow:hidden}
+.carimg{height:110px;background:#dfe8f2;display:flex;align-items:center;justify-content:center;font-size:42px}
+.card .p{padding:9px}
+.price{font-weight:800;color:#0b63ce;margin-top:5px}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:520px;width:100%;display:flex;background:#fff;border-top:1px solid #ddd;z-index:4}
+.nav button{flex:1;border:0;background:#fff;padding:10px 3px;font-size:10px;color:#667}
+.page{padding-bottom:75px}
+.row{display:flex;gap:9px}
+.field{width:100%;padding:12px;border:1px solid #dce2ea;border-radius:10px;margin:7px 0;background:#fff}
+.list{border:1px solid #e4e9f0;border-radius:12px;padding:12px;margin:8px 0}
+.danger{color:#c62828}
+.ok{color:#168447}
+.login{min-height:100vh;background:linear-gradient(160deg,#0a1e36,#0b63ce 60%,#f2f7ff);display:flex;align-items:center;justify-content:center;padding:22px}
+.loginbox{background:white;border-radius:20px;padding:24px;width:100%;max-width:420px;text-align:center}
+.logoBig{font-size:27px;font-weight:900}
+.muted{color:#687385;font-size:12px}
+.pill{display:inline-block;background:#eaf3ff;color:#0b63ce;padding:5px 8px;border-radius:8px;font-size:11px}
 </style>
 </head>
+
 <body>
 <div id="root"></div>
+
 <script>
-const KEY='mmcb_demo_v1';
-let db=JSON.parse(localStorage.getItem(KEY)||'null')||{
- users:[{id:'admin',name:'Mughal Admin',email:'admin@mughal.om',pass:'admin123',role:'admin',status:'approved'}],
- ads:[
-  {id:1,title:'Toyota Corolla 2021',price:5200,city:'Muscat',type:'Cars',status:'active',owner:'admin'},
-  {id:2,title:'Hyundai Elantra 2020',price:4800,city:'Muscat',type:'Cars',status:'active',owner:'admin'},
-  {id:3,title:'Nissan Altima 2019',price:4500,city:'Muscat',type:'Cars',status:'active',owner:'admin'},
-  {id:4,title:'Land Cruiser 2018',price:12500,city:'Muscat',type:'Cars',status:'active',owner:'admin'}
- ],
- bids:[], messages:[], deliveries:[]
+const firebaseConfig={
+ apiKey:"AIzaSyDagJ2QnaUVy3pPJXV1Pqxp4XtFG7vjoLc",
+ authDomain:"mughal-muscst-car-bid.firebaseapp.com",
+ projectId:"mughal-muscst-car-bid",
+ storageBucket:"mughal-muscst-car-bid.firebasestorage.app",
+ messagingSenderId:"248054757967",
+ appId:"1:248054757967:android:aa848f76001facbce4083a"
 };
-let me=null; let page='home';
-function save(){localStorage.setItem(KEY,JSON.stringify(db))}
-function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function login(){
- const email=document.getElementById('email').value.trim(), pass=document.getElementById('pass').value;
- const u=db.users.find(x=>x.email===email&&x.pass===pass);
- if(!u){document.getElementById('err').textContent='Invalid login details.';return}
- if(u.status!=='approved'){document.getElementById('err').textContent='Your account is waiting for admin approval.';return}
- me=u; render();
+
+firebase.initializeApp(firebaseConfig);
+
+const auth=firebase.auth();
+const db=firebase.firestore();
+
+let me=null;
+let page="home";
+let ads=[];
+
+function esc(s){
+ return String(s||"").replace(/[&<>"']/g,m=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",
+ '"':"&quot;","'":"&#39;"
+ }[m]));
 }
-function register(){
- const name=document.getElementById('rname').value.trim(), email=document.getElementById('remail').value.trim(), pass=document.getElementById('rpass').value;
- if(!name||!email||!pass)return alert('Please fill all fields.');
- if(db.users.some(u=>u.email===email))return alert('Account already exists.');
- db.users.push({id:'u'+Date.now(),name,email,pass,role:'user',status:'pending'});save();
- alert('Account created. Admin approval is required before login.');
- showLogin();
+
+function showLogin(){
+ document.getElementById("root").innerHTML=`
+ <div class="login">
+ <div class="loginbox">
+ <div class="logoBig">
+ MUGHAL<br><span style="color:#0b63ce">MUSCAT CAR BID</span>
+ </div>
+ <p class="muted">Buy • Sell • Bid • Deliver</p>
+ <input class="field" id="email" placeholder="Email">
+ <input class="field" id="pass" type="password" placeholder="Password">
+ <button class="btn" style="width:100%" onclick="login()">Login</button>
+ <p id="err" class="danger"></p>
+ <hr>
+ <p class="muted">New user?</p>
+ <button class="btn alt" onclick="showRegister()">Create account</button>
+ </div>
+ </div>`;
 }
-function showLogin(){document.getElementById('root').innerHTML=`<div class="login"><div class="loginbox">
-<div class="logoBig">MUGHAL<br><span style="color:#0b63ce">MUSCAT CAR BID</span></div><p class="muted">Buy • Sell • Bid • Deliver</p>
-<input class="field" id="email" placeholder="Email" value="admin@mughal.om">
-<input class="field" id="pass" placeholder="Password" type="password" value="admin123">
-<button class="btn" style="width:100%" onclick="login()">Login</button><p id="err" class="danger"></p>
-<hr><p class="muted">New user?</p><button class="btn alt" onclick="showRegister()">Create account</button>
-<p class="muted" style="margin-top:15px">Demo admin: admin@mughal.om / admin123</p></div></div>`}
-function showRegister(){document.getElementById('root').innerHTML=`<div class="login"><div class="loginbox">
-<div class="logoBig">Create Account</div><p class="muted">Your account will be approved by admin.</p>
-<input class="field" id="rname" placeholder="Full name"><input class="field" id="remail" placeholder="Email"><input class="field" id="rpass" placeholder="Password" type="password">
-<button class="btn" style="width:100%" onclick="register()">Submit for approval</button><button class="field" onclick="showLogin()">Back to login</button></div></div>`}
+
+function showRegister(){
+ document.getElementById("root").innerHTML=`
+ <div class="login">
+ <div class="loginbox">
+ <div class="logoBig">Create Account</div>
+ <p class="muted">Admin approval is required.</p>
+ <input class="field" id="rname" placeholder="Full name">
+ <input class="field" id="remail" placeholder="Email">
+ <input class="field" id="rpass" type="password" placeholder="Password">
+ <button class="btn" style="width:100%" onclick="register()">Submit for approval</button>
+ <button class="field" onclick="showLogin()">Back to login</button>
+ <p id="rerr" class="danger"></p>
+ </div>
+ </div>`;
+}
+
+async function register(){
+ const name=document.getElementById("rname").value.trim();
+ const email=document.getElementById("remail").value.trim();
+ const pass=document.getElementById("rpass").value;
+
+ if(!name||!email||!pass){
+  document.getElementById("rerr").textContent="Please fill all fields.";
+  return;
+ }
+
+ if(pass.length<6){
+  document.getElementById("rerr").textContent="Password must be at least 6 characters.";
+  return;
+ }
+
+ try{
+  const cred=await auth.createUserWithEmailAndPassword(email,pass);
+
+  await db.collection("users").doc(cred.user.uid).set({
+   name:name,
+   email:email,
+   role:"user",
+   status:"pending",
+   createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  await auth.signOut();
+
+  alert("Account created. Admin approval is required.");
+  showLogin();
+
+ }catch(e){
+  document.getElementById("rerr").textContent=e.message;
+ }
+}
+
+async function login(){
+ const email=document.getElementById("email").value.trim();
+ const pass=document.getElementById("pass").value;
+ const err=document.getElementById("err");
+
+ try{
+  const cred=await auth.signInWithEmailAndPassword(email,pass);
+  const snap=await db.collection("users").doc(cred.user.uid).get();
+
+  if(!snap.exists){
+   await auth.signOut();
+   err.textContent="Account profile not found.";
+   return;
+  }
+
+  const u=snap.data();
+
+  if(u.status!=="approved"){
+   await auth.signOut();
+   err.textContent="Your account is waiting for admin approval.";
+   return;
+  }
+
+  me={uid:cred.user.uid,...u};
+  loadAds();
+  render();
+
+ }catch(e){
+  err.textContent="Invalid email or password.";
+ }
+}
+
+function loadAds(){
+ db.collection("ads")
+ .where("status","==","active")
+ .onSnapshot(snapshot=>{
+  ads=[];
+  snapshot.forEach(doc=>{
+   ads.push({id:doc.id,...doc.data()});
+  });
+  if(me) render();
+ });
+}
+
 function render(){
- document.getElementById('root').innerHTML=`<div class="app page">
-<header><div class="logo">MUGHAL MUSCAT CAR BID</div><div class="sub">Muscat, Oman • Buy • Sell • Bid • Deliver</div><div class="search">🔎 Search cars, bikes, mobiles...</div></header>
-<div id="content"></div><div class="nav">
-<button onclick="go('home')">⌂<br>Home</button><button onclick="go('cats')">▦<br>Categories</button><button onclick="go('post')">＋<br>Post Ad</button><button onclick="go('chat')">◌<br>Chat</button><button onclick="go('profile')">♙<br>Profile</button></div></div>`;
+ document.getElementById("root").innerHTML=`
+ <div class="app page">
+ <header>
+ <div class="logo">MUGHAL MUSCAT CAR BID</div>
+ <div class="sub">Muscat, Oman • Buy • Sell • Bid • Deliver</div>
+ </header>
+
+ <div id="content"></div>
+
+ <div class="nav">
+ <button onclick="go('home')">⌂<br>Home</button>
+ <button onclick="go('cars')">🚗<br>Cars</button>
+ <button onclick="go('post')">＋<br>Post Ad</button>
+ <button onclick="go('profile')">♙<br>Profile</button>
+ </div>
+ </div>`;
+
  go(page);
 }
-function go(p){page=p; const c=document.getElementById('content'); if(!c)return;
- if(p==='home') c.innerHTML=home(); if(p==='cats')c.innerHTML=cats(); if(p==='cars')c.innerHTML=cars(); if(p==='post')c.innerHTML=post(); if(p==='chat')c.innerHTML=chat(); if(p==='profile')c.innerHTML=profile(); if(p==='admin')c.innerHTML=admin(); if(p==='delivery')c.innerHTML=delivery();
+
+function go(p){
+ page=p;
+ const c=document.getElementById("content");
+ if(!c)return;
+
+ if(p==="home")c.innerHTML=home();
+ if(p==="cars")c.innerHTML=cars();
+ if(p==="post")c.innerHTML=post();
+ if(p==="profile")c.innerHTML=profile();
+ if(p==="admin")c.innerHTML=admin();
 }
-function home(){return `<div class="hero"><h2>Find Your Dream Car</h2><p>Bid • Buy • Sell • Deliver across Oman</p><button class="btn alt" onclick="go('cars')">View Cars</button></div>
-<div class="grid">${[['🚗','Cars'],['🏍️','Bikes'],['📱','Mobiles'],['💻','Electronics'],['🛋️','Furniture'],['🏠','Property'],['💼','Jobs'],['•••','More']].map(x=>`<div class="cat" onclick="go('cars')"><b>${x[0]}</b>${x[1]}</div>`).join('')}</div>
-<section><div class="title"><h3>Featured Cars</h3><button class="btn" onclick="go('cars')">See All</button></div><div class="cards">${db.ads.filter(a=>a.status==='active').slice(0,4).map(card).join('')}</div></section>`}
-function card(a){return `<div class="card" onclick="detail(${a.id})"><div class="carimg">🚘</div><div class="p"><b>${esc(a.title)}</b><div class="price">OMR ${a.price.toLocaleString()}</div><small>📍 ${esc(a.city)}</small></div></div>`}
-function cats(){return `<section><div class="title"><h3>Categories</h3></div><div class="cards">${['🚗 Cars','🏍️ Bikes','📱 Mobiles','💻 Electronics','🛋️ Furniture','🏠 Property','💼 Job & Services','••• Others'].map(x=>`<div class="list" onclick="go('cars')"><b>${x}</b><br><span class="muted">Browse listings ›</span></div>`).join('')}</div></section>`}
-function cars(){return `<section><div class="title"><h3>Cars</h3><button class="btn" onclick="go('post')">＋ Post Ad</button></div>${db.ads.filter(a=>a.status==='active').map(a=>`<div class="list" onclick="detail(${a.id})"><div class="row"><div style="font-size:40px">🚘</div><div><b>${esc(a.title)}</b><div class="price">OMR ${a.price.toLocaleString()}</div><small>⚙ Automatic • 📍 ${esc(a.city)}</small></div></div></div>`).join('')}</section>`}
-function detail(id){let a=db.ads.find(x=>x.id===id); document.getElementById('root').insertAdjacentHTML('beforeend',`<div class="modal" onclick="this.remove()"><div class="sheet" onclick="event.stopPropagation()"><h2>${esc(a.title)}</h2><div class="carimg">🚘</div><h2 class="price">OMR ${a.price.toLocaleString()}</h2><p>📍 ${esc(a.city)} • Automatic</p><p>Good condition. Seller information is available after contacting the seller.</p><button class="btn" onclick="bid(${a.id})">Place Bid</button> <button class="field" onclick="this.closest('.modal').remove()">Close</button></div></div>`)}
-function bid(id){let a=db.ads.find(x=>x.id===id);let v=prompt('Enter your bid in OMR',a.price);if(v){db.bids.push({id:Date.now(),ad:id,user:me.id,amount:Number(v),time:new Date().toISOString()});save();alert('Bid submitted.');}}
-function post(){return `<section><div class="title"><h3>Post Ad</h3></div><input class="field" id="ptitle" placeholder="Title e.g. Toyota Corolla 2021"><input class="field" id="pprice" placeholder="Price (OMR)" type="number"><input class="field" id="pcity" placeholder="Location" value="Muscat"><input class="field" id="pdesc" placeholder="Description"><label class="field" style="display:block">Vehicle photos<input type="file" accept="image/*" multiple></label><button class="btn" style="width:100%" onclick="addAd()">Submit Ad</button></section>`}
-function addAd(){let t=document.getElementById('ptitle').value,p=Number(document.getElementById('pprice').value),c=document.getElementById('pcity').value,d=document.getElementById('pdesc').value;if(!t||!p)return alert('Title and price are required.');db.ads.unshift({id:Date.now(),title:t,price:p,city:c||'Muscat',type:'Cars',status:'active',owner:me.id,desc:d});save();alert('Ad posted.');go('cars')}
-function chat(){return `<section><div class="title"><h3>Buyer / Seller Chat</h3></div><div class="list"><b>Ahmed Ali</b><p>Is this car still available?</p><button class="btn" onclick="alert('Chat demo ready. Connect backend to enable live messaging.')">Open Chat</button></div></section>`}
-function delivery(){return `<section><div class="title"><h3>Delivery & Open Trip</h3></div><div class="list"><span class="pill">Delivery</span><h3>Fast & Safe Delivery</h3><p>We deliver your purchase across Oman.</p><select class="field"><option>Muscat</option><option>Seeb</option><option>Salalah</option><option>Sohar</option></select><select class="field"><option>Car / Vehicle</option><option>Bike</option><option>Other</option></select><button class="btn" onclick="alert('Delivery request saved in demo mode.')">Calculate Price</button></div></section>`}
-function profile(){let mine=db.ads.filter(a=>a.owner===me.id);return `<section><div class="title"><h3>My Profile</h3></div><div class="list"><b>${esc(me.name)}</b><p>${esc(me.email)}</p><span class="pill">${me.role}</span></div><div class="list" onclick="go('post')">My Ads ›</div><div class="list" onclick="go('cars')">My Bids (${db.bids.filter(b=>b.user===me.id).length}) ›</div>${me.role==='admin'?`<div class="list" onclick="go('admin')">⚙ Admin Panel ›</div>`:''}<button class="field" onclick="me=null;showLogin()">Logout</button></section>`}
-function admin(){let pending=db.users.filter(u=>u.status==='pending');return `<section><div class="title"><h3>Admin Panel</h3><span class="pill">${pending.length} pending</span></div><div class="list"><b>Users</b>${pending.length?pending.map(u=>`<div class="list"><b>${esc(u.name)}</b><br><small>${esc(u.email)}</small><br><button class="btn" onclick="approve('${u.id}')">Approve</button> <button class="field danger" onclick="reject('${u.id}')">Reject</button></div>`).join(''):'<p class="ok">No pending approvals.</p>'}</div><div class="list"><b>Total Ads:</b> ${db.ads.length}<br><b>Total Bids:</b> ${db.bids.length}</div></section>`}
-function approve(id){let u=db.users.find(x=>x.id===id);u.status='approved';save();go('admin')}
-function reject(id){db.users=db.users.filter(x=>x.id!==id);save();go('admin')}
-showLogin();
+
+function home(){
+ return `
+ <div class="hero">
+ <h2>Find Your Dream Car</h2>
+ <p>Bid • Buy • Sell • Deliver across Oman</p>
+ <button class="btn alt" onclick="go('cars')">View Cars</button>
+ </div>
+
+ <div class="grid">
+ <div class="cat" onclick="go('cars')"><b>🚗</b>Cars</div>
+ <div class="cat"><b>🏍️</b>Bikes</div>
+ <div class="cat"><b>📱</b>Mobiles</div>
+ <div class="cat"><b>💻</b>Electronics</div>
+ <div class="cat"><b>🛋️</b>Furniture</div>
+ <div class="cat"><b>🏠</b>Property</div>
+ <div class="cat"><b>💼</b>Jobs</div>
+ <div class="cat"><b>•••</b>More</div>
+ </div>
+
+ <section>
+ <div class="title">
+ <h3>Featured Cars</h3>
+ <button class="btn" onclick="go('cars')">See All</button>
+ </div>
+
+ <div class="cards">
+ ${ads.slice(0,4).map(card).join("")}
+ </div>
+ </section>`;
+}
+
+function card(a){
+ return `
+ <div class="card" onclick="detail('${a.id}')">
+ <div class="carimg">🚘</div>
+ <div class="p">
+ <b>${esc(a.title)}</b>
+ <div class="price">OMR ${Number(a.price||0).toLocaleString()}</div>
+ <small>📍 ${esc(a.city||"Muscat")}</small>
+ </div>
+ </div>`;
+}
+
+function cars(){
+ return `
+ <section>
+ <div class="title">
+ <h3>Cars</h3>
+ <button class="btn" onclick="go('post')">＋ Post Ad</button>
+ </div>
+
+ ${ads.map(a=>`
+ <div class="list" onclick="detail('${a.id}')">
+ <div class="row">
+ <div style="font-size:40px">🚘</div>
+ <div>
+ <b>${esc(a.title)}</b>
+ <div class="price">OMR ${Number(a.price||0).toLocaleString()}</div>
+ <small>📍 ${esc(a.city||"Muscat")}</small>
+ </div>
+ </div>
+ </div>
+ `).join("")}
+
+ ${ads.length===0?'<p class="muted">No cars posted yet.</p>':""}
+ </section>`;
+}
+
+function detail(id){
+ const a=ads.find(x=>x.id===id);
+ if(!a)return;
+
+ document.getElementById("root").insertAdjacentHTML("beforeend",`
+ <div style="position:fixed;inset:0;background:#0008;z-index:10;display:flex;align-items:flex-end"
+ onclick="this.remove()">
+ <div style="background:white;border-radius:18px 18px 0 0;width:100%;padding:18px"
+ onclick="event.stopPropagation()">
+
+ <h2>${esc(a.title)}</h2>
+ <div class="carimg">🚘</div>
+ <h2 class="price">OMR ${Number(a.price||0).toLocaleString()}</h2>
+ <p>📍 ${esc(a.city||"Muscat")}</p>
+ <p>${esc(a.desc||"Vehicle listing")}</p>
+
+ <button class="btn" onclick="bid('${a.id}')">Place Bid</button>
+ <button class="field" onclick="this.closest('[style*=fixed]').remove()">Close</button>
+
+ </div>
+ </div>`);
+}
+
+async function bid(id){
+ const a=ads.find(x=>x.id===id);
+ if(!a)return;
+
+ const value=prompt("Enter your bid in OMR",a.price);
+ if(!value)return;
+
+ const amount=Number(value);
+ if(!amount)return;
+
+ await db.collection("ads").doc(id).collection("bids").add({
+  userId:me.uid,
+  userName:me.name,
+  amount:amount,
+  createdAt:firebase.firestore.FieldValue.serverTimestamp()
+ });
+
+ alert("Bid submitted.");
+}
+
+function post(){
+ return `
+ <section>
+ <div class="title"><h3>Post Ad</h3></div>
+
+ <input class="field" id="ptitle" placeholder="Toyota Corolla 2021">
+ <input class="field" id="pprice" type="number" placeholder="Price OMR">
+ <input class="field" id="pcity" placeholder="Location" value="Muscat">
+ <textarea class="field" id="pdesc" placeholder="Description"></textarea>
+
+ <label class="field" style="display:block">
+ Vehicle photos
+ <input type="file" accept="image/*" multiple>
+ </label>
+
+ <button class="btn" style="width:100%" onclick="addAd()">Submit Ad</button>
+ </section>`;
+}
+
+async function addAd(){
+ const title=document.getElementById("ptitle").value.trim();
+ const price=Number(document.getElementById("pprice").value);
+ const city=document.getElementById("pcity").value.trim()||"Muscat";
+ const desc=document.getElementById("pdesc").value.trim();
+
+ if(!title||!price){
+  alert("Title and price are required.");
+  return;
+ }
+
+ await db.collection("ads").add({
+  title:title,
+  price:price,
+  city:city,
+  desc:desc,
+  type:"Cars",
+  ownerId:me.uid,
+  ownerName:me.name,
+  status:"active",
+  createdAt:firebase.firestore.FieldValue.serverTimestamp()
+ });
+
+ alert("Ad posted online.");
+ go("cars");
+}
+
+function profile(){
+ return `
+ <section>
+ <div class="title"><h3>My Profile</h3></div>
+
+ <div class="list">
+ <b>${esc(me.name)}</b>
+ <p>${esc(me.email)}</p>
+ <span class="pill">${esc(me.role)}</span>
+ </div>
+
+ <div class="list" onclick="go('post')">My Ads ›</div>
+
+ ${me.role==="admin"
+ ?'<div class="list" onclick="go(\'admin\')">⚙ Admin Panel ›</div>'
+ :""}
+
+ <button class="field" onclick="logout()">Logout</button>
+ </section>`;
+}
+
+async function admin(){
+ if(me.role!=="admin")return;
+
+ let html=`
+ <section>
+ <div class="title"><h3>Admin Panel</h3></div>
+ <div id="pendingUsers">Loading users...</div>
+ </section>`;
+
+ document.getElementById("content").innerHTML=html;
+
+ const snap=await db.collection("users").where("status","==","pending").get();
+
+ let out="";
+
+ snap.forEach(doc=>{
+  const u=doc.data();
+
+  out+=`
+  <div class="list">
+  <b>${esc(u.name)}</b><br>
+  <small>${esc(u.email)}</small><br><br>
+  <button class="btn" onclick="approve('${doc.id}')">Approve</button>
+  </div>`;
+ });
+
+ if(!out)out='<p class="ok">No pending approvals.</p>';
+
+ document.getElementById("pendingUsers").innerHTML=out;
+}
+
+async function approve(uid){
+ await db.collection("users").doc(uid).update({
+  status:"approved"
+ });
+
+ alert("User approved.");
+ admin();
+}
+
+async function logout(){
+ await auth.signOut();
+ me=null;
+ ads=[];
+ showLogin();
+}
+
+auth.onAuthStateChanged(async user=>{
+ if(!user){
+  showLogin();
+ }
+});
 </script>
 </body>
 </html>
