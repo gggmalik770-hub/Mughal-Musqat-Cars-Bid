@@ -97,10 +97,12 @@ function showLogin(message=""){
    <input class="field" id="pass" type="password" placeholder="Password">
    <button type="button" class="btn" style="width:100%" onclick="login()">Login with Email</button>
    <hr>
-   <p class="muted">Or login with your Oman mobile number</p>
+   <p class="muted">Or login with your mobile number</p>
    <div class="phone-row">
-    <input class="field code" id="phoneCode" value="+968" inputmode="tel" aria-label="Country code">
-    <input class="field number" id="phoneNumber" type="tel" inputmode="numeric" placeholder="Oman mobile number">
+    <select class="field code" id="phoneCode" aria-label="Country code">
+     <option value="+968">Oman +968</option><option value="+971">UAE +971</option><option value="+974">Qatar +974</option><option value="+92">Pakistan +92</option><option value="+966">Saudi Arabia +966</option><option value="+91">India +91</option><option value="+880">Bangladesh +880</option><option value="+965">Kuwait +965</option><option value="+973">Bahrain +973</option><option value="+44">UK +44</option><option value="+1">USA/Canada +1</option><option value="+61">Australia +61</option><option value="+64">New Zealand +64</option><option value="+90">Turkey +90</option><option value="+93">Afghanistan +93</option><option value="+98">Iran +98</option><option value="+962">Jordan +962</option><option value="+961">Lebanon +961</option><option value="+20">Egypt +20</option><option value="+27">South Africa +27</option><option value="+49">Germany +49</option><option value="+33">France +33</option><option value="+39">Italy +39</option><option value="+34">Spain +34</option><option value="+7">Russia/Kazakhstan +7</option><option value="+81">Japan +81</option><option value="+82">South Korea +82</option><option value="+86">China +86</option><option value="+60">Malaysia +60</option><option value="+65">Singapore +65</option><option value="+66">Thailand +66</option><option value="+62">Indonesia +62</option><option value="+63">Philippines +63</option><option value="+94">Sri Lanka +94</option><option value="+977">Nepal +977</option><option value="+964">Iraq +964</option><option value="+963">Syria +963</option><option value="+967">Yemen +967</option><option value="+218">Libya +218</option><option value="+212">Morocco +212</option><option value="+213">Algeria +213</option><option value="+216">Tunisia +216</option><option value="+234">Nigeria +234</option><option value="+254">Kenya +254</option><option value="+255">Tanzania +255</option><option value="+256">Uganda +256</option><option value="+31">Netherlands +31</option><option value="+32">Belgium +32</option><option value="+41">Switzerland +41</option><option value="+43">Austria +43</option><option value="+45">Denmark +45</option><option value="+46">Sweden +46</option><option value="+47">Norway +47</option><option value="+48">Poland +48</option><option value="+351">Portugal +351</option><option value="+30">Greece +30</option><option value="+380">Ukraine +380</option><option value="+40">Romania +40</option><option value="+420">Czechia +420</option><option value="+36">Hungary +36</option><option value="+55">Brazil +55</option><option value="+52">Mexico +52</option><option value="+54">Argentina +54</option><option value="+56">Chile +56</option><option value="+57">Colombia +57</option>
+    </select>
+    <input class="field number" id="phoneNumber" type="tel" inputmode="numeric" placeholder="Mobile number">
    </div>
    <div id="recaptcha-container"></div>
    <button type="button" class="btn alt" style="width:100%" onclick="sendPhoneCode()">Send OTP</button>
@@ -155,16 +157,14 @@ async function register(){
  }
 }
 
-function normalizeOmanPhone(){
- let code=(document.getElementById("phoneCode")?.value||"+968").replace(/\s+/g,"");
+function normalizePhone(){
+ const code=(document.getElementById("phoneCode")?.value||"").trim();
  let n=(document.getElementById("phoneNumber")?.value||"").replace(/[^0-9]/g,"");
- if(n.startsWith("968")) n=n.slice(3);
+ if(!/^\+[1-9][0-9]{0,3}$/.test(code)) return null;
  if(n.startsWith("0")) n=n.slice(1);
- if(code!=="+968") code="+968";
- if(!/^9[0-9]{7}$/.test(n)) return null;
+ if(n.length<6 || n.length>14) return null;
  return code+n;
 }
-
 function setupPhoneRecaptcha(){
  if(phoneRecaptcha) return phoneRecaptcha;
  phoneRecaptcha=new firebase.auth.RecaptchaVerifier("recaptcha-container",{size:"normal"});
@@ -174,8 +174,8 @@ function setupPhoneRecaptcha(){
 async function sendPhoneCode(){
  const err=document.getElementById("err");
  err.textContent="";
- const phone=normalizeOmanPhone();
- if(!phone){err.textContent="Enter a valid Oman mobile number, e.g. 91234567.";return;}
+ const phone=normalizePhone();
+ if(!phone){err.textContent="Select the country code and enter a valid mobile number.";return;}
  try{
   const verifier=setupPhoneRecaptcha();
   phoneConfirmation=await auth.signInWithPhoneNumber(phone,verifier);
@@ -545,7 +545,7 @@ async function loadUsers(){
    html+=`
    <div class="list">
     <b>${esc(u.name||"User")}</b><br>
-    <small>${esc(u.email||"")}</small><br><br>
+    <small>${esc(u.email||u.phone||"")}</small><br><br>
     <span class="pill">${esc(u.status||"pending")}</span>
     <span class="pill">${esc(u.role||"user")}</span><br><br>
     ${u.role!=="admin"&&String(u.status).toLowerCase()!=="approved"?`<button class="btn" onclick="approveUser('${esc(u.uid)}')">Approve</button>`:""}
