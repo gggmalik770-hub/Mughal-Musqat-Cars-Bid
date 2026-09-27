@@ -1,6 +1,7 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Mughal Muscat Car Bid</title>
 
@@ -11,52 +12,51 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#102033}
+button,input,textarea{font:inherit}
 .app{max-width:520px;margin:auto;min-height:100vh;background:#fff}
 header{padding:18px;border-bottom:1px solid #e7ebf2;position:sticky;top:0;background:#fff;z-index:3}
 .logo{font-weight:900;font-size:20px;color:#0b63ce}
 .sub{font-size:11px;color:#666}
 .hero{margin:14px;border-radius:15px;background:linear-gradient(135deg,#071a31,#0d6bd6);color:white;padding:18px}
 .hero h2{margin:0 0 7px}
-.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:700;background:#0b63ce;color:white;cursor:pointer}
+.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:700;background:#0b63ce;color:white;cursor:pointer;margin:4px 0}
 .btn.alt{background:white;color:#0b63ce}
 .btn.red{background:#c62828}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px}
-.cat{padding:12px 5px;border:1px solid #e8edf4;border-radius:12px;text-align:center;font-size:11px}
+.cat{padding:12px 5px;border:1px solid #e8edf4;border-radius:12px;text-align:center;font-size:11px;cursor:pointer}
 .cat b{display:block;font-size:23px;margin-bottom:5px}
 section{padding:0 14px}
 .title{display:flex;justify-content:space-between;align-items:center;margin:18px 0 10px}
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.card{border:1px solid #e3e8ef;border-radius:12px;overflow:hidden;background:#fff}
+.card{border:1px solid #e3e8ef;border-radius:12px;overflow:hidden;background:#fff;cursor:pointer}
 .carimg{height:150px;background:#dfe8f2;display:flex;align-items:center;justify-content:center;font-size:42px;overflow:hidden}
 .carimg img{width:100%;height:100%;object-fit:cover}
 .card .p{padding:9px}
 .price{font-weight:800;color:#0b63ce;margin-top:5px}
 .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:520px;width:100%;display:flex;background:#fff;border-top:1px solid #ddd;z-index:4}
-.nav button{flex:1;border:0;background:#fff;padding:10px 3px;font-size:10px;color:#667}
+.nav button{flex:1;border:0;background:#fff;padding:10px 3px;font-size:10px;color:#667;cursor:pointer}
 .page{padding-bottom:75px}
 .row{display:flex;gap:9px}
 .field{width:100%;padding:12px;border:1px solid #dce2ea;border-radius:10px;margin:7px 0;background:#fff}
 .list{border:1px solid #e4e9f0;border-radius:12px;padding:12px;margin:8px 0;background:#fff}
 .danger{color:#c62828}
-.ok{color:#168447}
-.login{min-height:100vh;background:linear-gradient(160deg,#0a1e36,#0b63ce 60%,#f2f7ff);display:flex;align-items:center;justify-content:center;padding:22px}
-.loginbox{background:white;border-radius:20px;padding:24px;width:100%;max-width:420px;text-align:center}
-.logoBig{font-size:27px;font-weight:900}
-.muted{color:#687385;font-size:12px}
 .pill{display:inline-block;background:#eaf3ff;color:#0b63ce;padding:5px 8px;border-radius:8px;font-size:11px}
 .gallery{display:flex;gap:7px;overflow-x:auto;margin:10px 0}
 .gallery img{width:85px;height:70px;object-fit:cover;border-radius:8px}
-.stat{display:inline-block;width:48%;padding:14px;border:1px solid #e4e9f0;border-radius:12px;margin:1%;text-align:center}
-.stat b{display:block;font-size:22px;color:#0b63ce}
-textarea{min-height:90px;resize:vertical}
+.login{min-height:100vh;background:linear-gradient(160deg,#0a1e36,#0b63ce 60%,#f2f7ff);display:flex;align-items:center;justify-content:center;padding:22px}
+.loginbox{background:#fff;border-radius:20px;padding:24px;width:100%;max-width:420px;text-align:center}
+.logoBig{font-size:27px;font-weight:900}
+.muted{font-size:12px;color:#687385}
 .loading{text-align:center;padding:30px;color:#687385}
 </style>
 </head>
 
 <body>
+
 <div id="root"></div>
 
 <script>
+
 const firebaseConfig={
  apiKey:"AIzaSyDagJ2QnaUVy3pPJXV1Pqxp4XtFG7vjoLc",
  authDomain:"mughal-muscst-car-bid.firebaseapp.com",
@@ -74,76 +74,130 @@ const db=firebase.firestore();
 let me=null;
 let page="home";
 let ads=[];
-let myAds=[];
-let pendingUsers=[];
 let unsubscribeAds=null;
 
 function esc(s){
- return String(s||"").replace(/[&<>"']/g,m=>({
- "&":"&amp;",
- "<":"&lt;",
- ">":"&gt;",
- '"':"&quot;",
- "'":"&#39;"
+ return String(s==null?"":s).replace(/[&<>"']/g,m=>({
+  "&":"&amp;",
+  "<":"&lt;",
+  ">":"&gt;",
+  '"':"&quot;",
+  "'":"&#39;"
  }[m]));
 }
 
 function showLogin(message=""){
+
  document.getElementById("root").innerHTML=`
+
  <div class="login">
+
   <div class="loginbox">
+
    <div class="logoBig">
-    MUGHAL<br><span style="color:#0b63ce">MUSCAT CAR BID</span>
+    MUGHAL<br>
+    <span style="color:#0b63ce">
+     MUSCAT CAR BID
+    </span>
    </div>
 
-   <p class="muted">Buy • Sell • Bid • Deliver</p>
+   <p class="muted">
+    Buy • Sell • Bid • Deliver
+   </p>
 
-   <input class="field" id="email" type="email" placeholder="Email">
-   <input class="field" id="pass" type="password" placeholder="Password">
+   <input
+    class="field"
+    id="email"
+    type="email"
+    placeholder="Email">
 
-   <button class="btn" style="width:100%" onclick="login()">Login</button>
+   <input
+    class="field"
+    id="pass"
+    type="password"
+    placeholder="Password">
 
-   <p id="err" class="danger">${esc(message)}</p>
+   <button
+    class="btn"
+    style="width:100%"
+    onclick="login()">
+    Login
+   </button>
+
+   <p id="err" class="danger">
+    ${esc(message)}
+   </p>
 
    <hr>
 
-   <p class="muted">New user?</p>
+   <p class="muted">
+    New user?
+   </p>
 
-   <button class="btn alt" onclick="showRegister()">
+   <button
+    class="btn alt"
+    onclick="showRegister()">
     Create account
    </button>
+
   </div>
+
  </div>`;
+
 }
 
 function showRegister(){
+
  document.getElementById("root").innerHTML=`
+
  <div class="login">
+
   <div class="loginbox">
 
-   <div class="logoBig">Create Account</div>
+   <div class="logoBig">
+    Create Account
+   </div>
 
    <p class="muted">
     Your account will be sent to admin for approval.
    </p>
 
-   <input class="field" id="rname" placeholder="Full name">
+   <input
+    class="field"
+    id="rname"
+    placeholder="Full name">
 
-   <input class="field" id="remail" type="email" placeholder="Email">
+   <input
+    class="field"
+    id="remail"
+    type="email"
+    placeholder="Email">
 
-   <input class="field" id="rpass" type="password" placeholder="Password">
+   <input
+    class="field"
+    id="rpass"
+    type="password"
+    placeholder="Password (6+ characters)">
 
-   <button class="btn" style="width:100%" onclick="register()">
+   <button
+    class="btn"
+    style="width:100%"
+    onclick="register()">
     Submit for approval
    </button>
 
-   <button class="field" onclick="showLogin()">
+   <button
+    class="field"
+    onclick="showLogin()">
     Back to login
    </button>
 
    <p id="rerr" class="danger"></p>
+
   </div>
+
  </div>`;
+
 }
 
 async function register(){
@@ -152,33 +206,43 @@ async function register(){
  const email=document.getElementById("remail").value.trim();
  const pass=document.getElementById("rpass").value;
 
+ const err=document.getElementById("rerr");
+
  if(!name || !email || !pass){
-  document.getElementById("rerr").textContent=
-   "Please fill all fields.";
+
+  err.textContent="Please fill all fields.";
+
   return;
  }
 
  if(pass.length<6){
-  document.getElementById("rerr").textContent=
+
+  err.textContent=
    "Password must be at least 6 characters.";
+
   return;
  }
 
  try{
 
-  const cred=await auth.createUserWithEmailAndPassword(
-   email,
-   pass
-  );
+  const cred=
+   await auth.createUserWithEmailAndPassword(
+    email,
+    pass
+   );
 
   await db.collection("users")
    .doc(cred.user.uid)
    .set({
+
     name:name,
     email:email,
     role:"user",
     status:"pending",
-    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+
+    createdAt:
+     firebase.firestore.FieldValue.serverTimestamp()
+
    });
 
   await auth.signOut();
@@ -189,9 +253,13 @@ async function register(){
 
  }catch(e){
 
-  document.getElementById("rerr").textContent=e.message;
+  console.error(e);
+
+  err.textContent=
+   e.message || "Registration failed.";
 
  }
+
 }
 
 async function getUserProfile(uid){
@@ -200,35 +268,48 @@ async function getUserProfile(uid){
   await db.collection("users").doc(uid).get();
 
  if(snap.exists){
+
   return {
    uid:uid,
    ...snap.data()
   };
+
  }
 
  snap=
   await db.collection("User").doc(uid).get();
 
  if(snap.exists){
+
   return {
    uid:uid,
    ...snap.data()
   };
+
  }
 
  return null;
+
 }
 
 async function login(){
 
- const email=document.getElementById("email").value.trim();
- const pass=document.getElementById("pass").value;
- const err=document.getElementById("err");
+ const email=
+  document.getElementById("email").value.trim();
+
+ const pass=
+  document.getElementById("pass").value;
+
+ const err=
+  document.getElementById("err");
 
  err.textContent="";
 
  if(!email || !pass){
-  err.textContent="Enter email and password.";
+
+  err.textContent=
+   "Enter email and password.";
+
   return;
  }
 
@@ -241,7 +322,9 @@ async function login(){
    );
 
   const profile=
-   await getUserProfile(cred.user.uid);
+   await getUserProfile(
+    cred.user.uid
+   );
 
   if(!profile){
 
@@ -256,7 +339,10 @@ async function login(){
   const status=
    String(profile.status||"").toLowerCase();
 
-  if(profile.role!=="admin" && status!=="approved"){
+  if(
+   profile.role!=="admin" &&
+   status!=="approved"
+  ){
 
    await auth.signOut();
 
@@ -270,7 +356,7 @@ async function login(){
 
   page="home";
 
-  loadAds();
+  listenAds();
 
   render();
 
@@ -279,58 +365,73 @@ async function login(){
   console.error(e);
 
   err.textContent=
-   "Invalid email or password.";
+   e.message || "Login failed.";
 
  }
+
 }
 
-function loadAds(){
+function listenAds(){
 
  if(unsubscribeAds){
+
   unsubscribeAds();
-  unsubscribeAds=null;
+
  }
 
  unsubscribeAds=
   db.collection("ads")
    .where("status","==","active")
-   .onSnapshot(snapshot=>{
+   .onSnapshot(
 
-    ads=[];
+    snapshot=>{
 
-    snapshot.forEach(doc=>{
-     ads.push({
-      id:doc.id,
-      ...doc.data()
+     ads=[];
+
+     snapshot.forEach(doc=>{
+
+      ads.push({
+       id:doc.id,
+       ...doc.data()
+      });
+
      });
-    });
 
-    ads.sort((a,b)=>{
-     const at=
-      a.createdAt?.seconds || 0;
-     const bt=
-      b.createdAt?.seconds || 0;
+     ads.sort(
+      (a,b)=>
+       (b.createdAt?.seconds||0)-
+       (a.createdAt?.seconds||0)
+     );
 
-     return bt-at;
-    });
+     if(me){
 
-    if(me){
-     render();
+      render();
+
+     }
+
+    },
+
+    error=>{
+
+     console.error(
+      "Ads listener:",
+      error
+     );
+
     }
 
-   },error=>{
+   );
 
-    console.error(error);
-
-   });
 }
 
 function render(){
 
  document.getElementById("root").innerHTML=`
+
  <div class="app page">
 
   <header>
+
    <div class="logo">
     MUGHAL MUSCAT CAR BID
    </div>
@@ -338,11 +439,13 @@ function render(){
    <div class="sub">
     Muscat, Oman • Buy • Sell • Bid • Deliver
    </div>
+
   </header>
 
   <div id="content"></div>
 
   <div class="nav">
+
    <button onclick="go('home')">
     ⌂<br>Home
    </button>
@@ -358,46 +461,60 @@ function render(){
    <button onclick="go('profile')">
     ♙<br>Profile
    </button>
+
   </div>
 
  </div>`;
 
  go(page);
+
 }
 
 function go(p){
 
  page=p;
 
- const c=document.getElementById("content");
+ const c=
+  document.getElementById("content");
 
  if(!c)return;
 
- if(p==="home")c.innerHTML=home();
+ if(p==="home")
+  c.innerHTML=home();
 
- if(p==="cars")c.innerHTML=cars();
+ else if(p==="cars")
+  c.innerHTML=cars();
 
- if(p==="post")c.innerHTML=post();
+ else if(p==="post")
+  c.innerHTML=post();
 
- if(p==="profile")c.innerHTML=profile();
+ else if(p==="profile")
+  c.innerHTML=profile();
 
- if(p==="admin")admin();
+ else if(p==="admin")
+  admin();
 
- if(p==="myads")myAdsPage();
+ else if(p==="myads")
+  myAds();
+
 }
 
 function home(){
 
  return `
+
  <div class="hero">
 
-  <h2>Find Your Dream Car</h2>
+  <h2>
+   Find Your Dream Car
+  </h2>
 
   <p>
    Bid • Buy • Sell • Deliver across Oman
   </p>
 
-  <button class="btn alt"
+  <button
+   class="btn alt"
    onclick="go('cars')">
    View Cars
   </button>
@@ -406,7 +523,9 @@ function home(){
 
  <div class="grid">
 
-  <div class="cat" onclick="go('cars')">
+  <div
+   class="cat"
+   onclick="go('cars')">
    <b>🚗</b>Cars
   </div>
 
@@ -443,37 +562,49 @@ function home(){
  <section>
 
   <div class="title">
-   <h3>Featured Cars</h3>
 
-   <button class="btn"
+   <h3>
+    Featured Cars
+   </h3>
+
+   <button
+    class="btn"
     onclick="go('cars')">
     See All
    </button>
+
   </div>
 
   <div class="cards">
+
    ${ads.slice(0,4).map(card).join("")}
+
   </div>
 
   ${
-   ads.length===0
-   ?'<p class="muted">No cars posted yet.</p>'
-   :''
+   ads.length
+   ? ""
+   : '<p class="muted">No cars posted yet.</p>'
   }
 
- </section>`;
+ </section>
+
+ `;
+
 }
 
 function card(a){
 
  const image=
   a.images && a.images.length
-   ?`<img src="${a.images[0]}">`
-   :'🚘';
+   ? `<img src="${a.images[0]}" alt="">`
+   : "🚘";
 
  return `
- <div class="card"
-  onclick="detail('${a.id}')">
+
+ <div
+  class="card"
+  onclick="detail('${esc(a.id)}')">
 
   <div class="carimg">
    ${image}
@@ -481,7 +612,9 @@ function card(a){
 
   <div class="p">
 
-   <b>${esc(a.title)}</b>
+   <b>
+    ${esc(a.title)}
+   </b>
 
    <div class="price">
     OMR ${Number(a.price||0).toLocaleString()}
@@ -493,55 +626,855 @@ function card(a){
 
   </div>
 
- </div>`;
+ </div>
+
+ `;
+
 }
 
 function cars(){
 
  return `
+
  <section>
 
   <div class="title">
-   <h3>Cars</h3>
 
-   <button class="btn"
+   <h3>
+    Cars
+   </h3>
+
+   <button
+    class="btn"
     onclick="go('post')">
     ＋ Post Ad
    </button>
+
   </div>
 
-  ${ads.map(a=>{
+  ${
+   ads.length
 
-   const image=
-    a.images && a.images.length
-     ?`<img src="${a.images[0]}"
-        style="width:90px;height:70px;object-fit:cover;border-radius:8px">`
-     :'🚘';
+   ?
 
-   return `
-   <div class="list"
-    onclick="detail('${a.id}')">
+   ads.map(a=>`
 
-    <div class="row">
+    <div
+     class="list"
+     onclick="detail('${esc(a.id)}')">
 
-     <div style="font-size:40px">
-      ${image}
-     </div>
+     <div class="row">
 
-     <div>
+      <div
+       style="width:90px;font-size:40px">
 
-      <b>${esc(a.title)}</b>
+       ${
+        a.images && a.images.length
 
-      <div class="price">
-       OMR ${Number(a.price||0).toLocaleString()}
+        ?
+
+        `<img
+         src="${a.images[0]}"
+         style="width:90px;height:70px;object-fit:cover;border-radius:8px"
+         alt="">`
+
+        :
+
+        "🚘"
+       }
+
       </div>
 
-      <small>
-       📍 ${esc(a.city||"Muscat")}
-      </small>
+      <div>
+
+       <b>
+        ${esc(a.title)}
+       </b>
+
+       <div class="price">
+        OMR ${Number(a.price||0).toLocaleString()}
+       </div>
+
+       <small>
+              <div class="price">
+        OMR ${Number(a.price||0).toLocaleString()}
+       </div>
+
+       <small>
+        📍 ${esc(a.city||"Muscat")}
+       </small>
+
+      </div>
 
      </div>
 
     </div>
 
-   </div
+   `).join("")
+
+   :
+
+   '<p class="muted">No cars posted yet.</p>'
+  }
+
+ </section>
+
+ `;
+
+}
+
+function post(){
+
+ return `
+
+ <section>
+
+  <div class="title">
+
+   <h3>
+    Post Car Ad
+   </h3>
+
+  </div>
+
+  <input
+   class="field"
+   id="adTitle"
+   placeholder="Car name / model">
+
+  <input
+   class="field"
+   id="adPrice"
+   type="number"
+   placeholder="Price in OMR">
+
+  <input
+   class="field"
+   id="adCity"
+   placeholder="City">
+
+  <textarea
+   class="field"
+   id="adDesc"
+   placeholder="Description">
+  </textarea>
+
+  <input
+   class="field"
+   id="adImages"
+   type="file"
+   accept="image/*"
+   multiple>
+
+  <p class="muted">
+   Up to 4 photos. Photos are compressed before saving.
+  </p>
+
+  <button
+   class="btn"
+   style="width:100%"
+   onclick="addAd()">
+
+   Post Ad
+
+  </button>
+
+  <p
+   id="postMsg"
+   class="muted">
+  </p>
+
+ </section>
+
+ `;
+
+}
+
+function compressImage(file){
+
+ return new Promise(
+  (resolve,reject)=>{
+
+   const reader=
+    new FileReader();
+
+   reader.onload=e=>{
+
+    const img=
+     new Image();
+
+    img.onload=()=>{
+
+     const max=900;
+
+     let w=img.width;
+     let h=img.height;
+
+     if(w>max || h>max){
+
+      if(w>h){
+
+       h=
+        Math.round(
+         h*max/w
+        );
+
+       w=max;
+
+      }else{
+
+       w=
+        Math.round(
+         w*max/h
+        );
+
+       h=max;
+
+      }
+
+     }
+
+     const canvas=
+      document.createElement(
+       "canvas"
+      );
+
+     canvas.width=w;
+     canvas.height=h;
+
+     canvas
+      .getContext("2d")
+      .drawImage(
+       img,
+       0,
+       0,
+       w,
+       h
+      );
+
+     resolve(
+      canvas.toDataURL(
+       "image/jpeg",
+       0.55
+      )
+     );
+
+    };
+
+    img.onerror=reject;
+
+    img.src=e.target.result;
+
+   };
+
+   reader.onerror=reject;
+
+   reader.readAsDataURL(file);
+
+  }
+ );
+
+}
+
+async function addAd(){
+
+ const title=
+  document
+   .getElementById("adTitle")
+   .value
+   .trim();
+
+ const price=
+  Number(
+   document
+    .getElementById("adPrice")
+    .value || 0
+  );
+
+ const city=
+  document
+   .getElementById("adCity")
+   .value
+   .trim();
+
+ const desc=
+  document
+   .getElementById("adDesc")
+   .value
+   .trim();
+
+ const files=
+  [
+   ...document
+    .getElementById("adImages")
+    .files
+  ].slice(0,4);
+
+ const msg=
+  document
+   .getElementById("postMsg");
+
+ if(!title || !price){
+
+  msg.textContent=
+   "Please enter car name and price.";
+
+  return;
+
+ }
+
+ msg.textContent=
+  "Uploading...";
+
+ try{
+
+  const images=[];
+
+  for(
+   const file of files
+  ){
+
+   images.push(
+    await compressImage(file)
+   );
+
+  }
+
+  await db
+   .collection("ads")
+   .add({
+
+    title:title,
+    price:price,
+    city:city || "Muscat",
+    desc:desc,
+    images:images,
+
+    ownerId:me.uid,
+
+    ownerName:
+     me.name || me.email,
+
+    status:"active",
+
+    createdAt:
+     firebase.firestore.FieldValue
+      .serverTimestamp()
+
+   });
+
+  msg.textContent=
+   "Ad posted successfully.";
+
+  document
+   .getElementById("adTitle")
+   .value="";
+
+  document
+   .getElementById("adPrice")
+   .value="";
+
+  document
+   .getElementById("adCity")
+   .value="";
+
+  document
+   .getElementById("adDesc")
+   .value="";
+
+  document
+   .getElementById("adImages")
+   .value="";
+
+ }catch(e){
+
+  console.error(e);
+
+  msg.textContent=
+   "Error: " + e.message;
+
+ }
+
+}
+
+function detail(id){
+
+ const a=
+  ads.find(
+   x=>x.id===id
+  );
+
+ if(!a)return;
+
+ const images=
+  (a.images||[])
+   .map(
+    x=>`<img src="${x}" alt="">`
+   )
+   .join("");
+
+ document
+  .getElementById("content")
+  .innerHTML=`
+
+  <section>
+
+   <button
+    class="field"
+    onclick="go('cars')">
+    ← Back
+   </button>
+
+   <h2>
+    ${esc(a.title)}
+   </h2>
+
+   <div class="gallery">
+    ${images}
+   </div>
+
+   <div class="price">
+    OMR ${Number(a.price||0).toLocaleString()}
+   </div>
+
+   <p>
+    📍 ${esc(a.city||"Muscat")}
+   </p>
+
+   <div class="list">
+    ${esc(a.desc||"No description")}
+   </div>
+
+   <button
+    class="btn"
+    onclick="bid('${esc(a.id)}')">
+    Place Bid
+   </button>
+
+   ${
+    me &&
+    a.ownerId===me.uid
+
+    ?
+
+    `<button
+     class="btn red"
+     onclick="deleteAd('${esc(a.id)}')">
+     Delete Ad
+    </button>`
+
+    :
+
+    ""
+   }
+
+  </section>
+
+ `;
+
+}
+
+async function bid(id){
+
+ const amount=
+  prompt(
+   "Enter your bid in OMR:"
+  );
+
+ if(!amount)return;
+
+ const value=
+  Number(amount);
+
+ if(!value || value<=0){
+
+  alert("Invalid bid.");
+
+  return;
+
+ }
+
+ try{
+
+  await db
+   .collection("ads")
+   .doc(id)
+   .collection("bids")
+   .add({
+
+    bidderId:me.uid,
+
+    bidderName:
+     me.name || me.email,
+
+    amount:value,
+
+    createdAt:
+     firebase.firestore.FieldValue
+      .serverTimestamp()
+
+   });
+
+  alert(
+   "Bid submitted."
+  );
+
+ }catch(e){
+
+  alert(e.message);
+
+ }
+
+}
+
+async function deleteAd(id){
+
+ if(
+  !confirm(
+   "Delete this ad?"
+  )
+ )return;
+
+ try{
+
+  await db
+   .collection("ads")
+   .doc(id)
+   .update({
+    status:"deleted"
+   });
+
+ }catch(e){
+
+  alert(e.message);
+
+ }
+
+}
+
+function profile(){
+
+ return `
+
+ <section>
+
+  <div class="title">
+
+   <h3>
+    Profile
+   </h3>
+
+  </div>
+
+  <div class="list">
+
+   <h2>
+    ${esc(me.name||"User")}
+   </h2>
+
+   <p>
+    ${esc(me.email||"")}
+   </p>
+
+   <span class="pill">
+    ${esc(me.role||"user")}
+   </span>
+
+  </div>
+
+  <button
+   class="btn"
+   onclick="go('myads')">
+   My Ads
+  </button>
+
+  ${
+   me.role==="admin"
+
+   ?
+
+   `<button
+    class="btn"
+    onclick="go('admin')">
+    Admin Panel
+   </button>`
+
+   :
+
+   ""
+  }
+
+  <button
+   class="btn red"
+   onclick="logout()">
+   Logout
+  </button>
+
+ </section>
+
+ `;
+
+}
+
+function myAds(){
+
+ const mine=
+  ads.filter(
+   a=>a.ownerId===me.uid
+  );
+
+ document
+  .getElementById("content")
+  .innerHTML=`
+
+  <section>
+
+   <div class="title">
+    <h3>
+     My Ads
+    </h3>
+   </div>
+
+   ${
+    mine.length
+
+    ?
+
+    `<div class="cards">
+     ${mine.map(card).join("")}
+    </div>`
+
+    :
+
+    '<p class="muted">You have no ads yet.</p>'
+   }
+
+  </section>
+
+ `;
+
+}
+
+async function admin(){
+
+ if(
+  !me ||
+  me.role!=="admin"
+ ){
+
+  go("home");
+
+  return;
+
+ }
+
+ const c=
+  document
+   .getElementById("content");
+
+ c.innerHTML=`
+
+  <section>
+   <div class="loading">
+    Loading Admin Panel...
+   </div>
+  </section>
+
+ `;
+
+ try{
+
+  const snap=
+   await db
+    .collection("users")
+    .where(
+     "status",
+     "==",
+     "pending"
+    )
+    .get();
+
+  const pending=[];
+
+  snap.forEach(doc=>{
+
+   pending.push({
+    uid:doc.id,
+    ...doc.data()
+   });
+
+  });
+
+  c.innerHTML=`
+
+  <section>
+
+   <div class="title">
+    <h3>
+     Admin Panel
+    </h3>
+   </div>
+
+   <h4>
+    Pending Users
+   </h4>
+
+   ${
+    pending.length
+
+    ?
+
+    pending.map(
+     u=>`
+
+      <div class="list">
+
+       <b>
+        ${esc(u.name)}
+       </b>
+
+       <div>
+        ${esc(u.email)}
+       </div>
+
+       <button
+        class="btn"
+        onclick="approve('${esc(u.uid)}')">
+        Approve
+       </button>
+
+       <button
+        class="btn red"
+        onclick="rejectUser('${esc(u.uid)}')">
+        Reject
+       </button>
+
+      </div>
+
+     `
+    ).join("")
+
+    :
+
+    '<p class="muted">No pending users.</p>'
+   }
+
+   <h4>
+    Live Ads
+   </h4>
+
+   <div class="cards">
+    ${ads.map(card).join("")}
+   </div>
+
+  </section>
+
+  `;
+
+ }catch(e){
+
+  c.innerHTML=`
+
+   <section>
+
+    <p class="danger">
+     Admin error:
+     ${esc(e.message)}
+    </p>
+
+   </section>
+
+  `;
+
+ }
+
+}
+
+async function approve(uid){
+
+ try{
+
+  await db
+   .collection("users")
+   .doc(uid)
+   .update({
+    status:"approved"
+   });
+
+  alert(
+   "User approved."
+  );
+
+  admin();
+
+ }catch(e){
+
+  alert(e.message);
+
+ }
+
+}
+
+async function rejectUser(uid){
+
+ try{
+
+  await db
+   .collection("users")
+   .doc(uid)
+   .update({
+    status:"rejected"
+   });
+
+  alert(
+   "User rejected."
+  );
+
+  admin();
+
+ }catch(e){
+
+  alert(e.message);
+
+ }
+
+}
+
+async function logout(){
+
+ if(unsubscribeAds){
+
+  unsubscribeAds();
+
+  unsubscribeAds=null;
+
+ }
+
+ me=null;
+
+ await auth.signOut();
+
+ showLogin();
+
+}
+
+auth.onAuthStateChanged(
+ user=>{
+
+  if(!user){
+
+   me=null;
+
+   showLogin();
+
+  }
+
+ }
+);
+
+showLogin();
+
+</script>
+
+</body>
+</html>
