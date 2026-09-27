@@ -47,6 +47,8 @@ section{padding:0 14px}
 .logoBig{font-size:27px;font-weight:900}
 .muted{font-size:12px;color:#687385}
 .loading{text-align:center;padding:30px;color:#687385}
+#recaptcha-container{margin:10px 0}
+.phone-row{display:flex;gap:7px}.phone-row .code{width:82px}.phone-row .number{flex:1}
 </style>
 </head>
 <body>
@@ -82,6 +84,9 @@ function esc(s){
  }[m]));
 }
 
+let phoneConfirmation=null;
+let phoneRecaptcha=null;
+
 function showLogin(message=""){
  document.getElementById("root").innerHTML=`
  <div class="login">
@@ -90,11 +95,23 @@ function showLogin(message=""){
    <p class="muted">Buy &#x2022; Sell &#x2022; Bid &#x2022; Deliver</p>
    <input class="field" id="email" type="email" placeholder="Email">
    <input class="field" id="pass" type="password" placeholder="Password">
-   <button class="btn" style="width:100%" onclick="login()">Login</button>
+   <button type="button" class="btn" style="width:100%" onclick="login()">Login with Email</button>
+   <hr>
+   <p class="muted">Or login with your Oman mobile number</p>
+   <div class="phone-row">
+    <input class="field code" id="phoneCode" value="+968" inputmode="tel" aria-label="Country code">
+    <input class="field number" id="phoneNumber" type="tel" inputmode="numeric" placeholder="Oman mobile number">
+   </div>
+   <div id="recaptcha-container"></div>
+   <button type="button" class="btn alt" style="width:100%" onclick="sendPhoneCode()">Send OTP</button>
+   <div id="otpBox" style="display:none">
+    <input class="field" id="phoneOtp" inputmode="numeric" placeholder="Enter SMS OTP">
+    <button type="button" class="btn" style="width:100%" onclick="verifyPhoneCode()">Verify OTP</button>
+   </div>
    <p id="err" class="danger">${esc(message)}</p>
    <hr>
    <p class="muted">New user?</p>
-   <button class="btn alt" onclick="showRegister()">Create account</button>
+   <button type="button" class="btn alt" onclick="showRegister()">Create account</button>
   </div>
  </div>`;
 }
@@ -135,6 +152,69 @@ async function register(){
  }catch(e){
   console.error(e);
   err.textContent=e.message||"Registration failed.";
+ }
+}
+
+function normalizeOmanPhone(){
+ let code=(document.getElementById("phoneCode")?.value||"+968").replace(/\s+/g,"");
+ let n=(document.getElementById("phoneNumber")?.value||"").replace(/[^0-9]/g,"");
+ if(n.startsWith("968")) n=n.slice(3);
+ if(n.startsWith("0")) n=n.slice(1);
+ if(code!=="+968") code="+968";
+ if(!/^9[0-9]{7}$/.test(n)) return null;
+ return code+n;
+}
+
+function setupPhoneRecaptcha(){
+ if(phoneRecaptcha) return phoneRecaptcha;
+ phoneRecaptcha=new firebase.auth.RecaptchaVerifier("recaptcha-container",{size:"normal"});
+ return phoneRecaptcha;
+}
+
+async function sendPhoneCode(){
+ const err=document.getElementById("err");
+ err.textContent="";
+ const phone=normalizeOmanPhone();
+ if(!phone){err.textContent="Enter a valid Oman mobile number, e.g. 91234567.";return;}
+ try{
+  const verifier=setupPhoneRecaptcha();
+  phoneConfirmation=await auth.signInWithPhoneNumber(phone,verifier);
+  document.getElementById("otpBox").style.display="block";
+  err.textContent="OTP sent by SMS.";
+ }catch(e){
+  console.error(e);
+  if(phoneRecaptcha){try{phoneRecaptcha.clear();}catch(_){} phoneRecaptcha=null;}
+  err.textContent=e.message||"Could not send OTP.";
+ }
+}
+
+async function verifyPhoneCode(){
+ const err=document.getElementById("err");
+ const otp=(document.getElementById("phoneOtp")?.value||"").trim();
+ if(!phoneConfirmation){err.textContent="Please request an OTP first.";return;}
+ if(!/^\d{6}$/.test(otp)){err.textContent="Enter the 6-digit OTP.";return;}
+ try{
+  const cred=await phoneConfirmation.confirm(otp);
+  const existing=await getUserProfile(cred.user.uid);
+  if(!existing){
+   await db.collection("users").doc(cred.user.uid).set({phone:cred.user.phoneNumber,name:"",role:"user",status:"pending",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+   await auth.signOut();
+   showLogin("Mobile verified. Your account is waiting for admin approval.");
+   return;
+  }
+  const status=String(existing.status||"").toLowerCase();
+  if(existing.role!=="admin"&&status!=="approved"){
+   await auth.signOut();
+   showLogin("Your account is waiting for admin approval.");
+   return;
+  }
+  me=existing;
+  page="home";
+  listenAds();
+  render();
+ }catch(e){
+  console.error(e);
+  err.textContent=e.message||"Invalid OTP.";
  }
 }
 
@@ -184,18 +264,22 @@ async function login(){
 
 function listenAds(){
  if(unsubscribeAds){unsubscribeAds();}
-
- unsubscribeAds=db.collection("ads")
-  .where("status","==","active")
-  .onSnapshot(
-   snapshot=>{
-    ads=[];
-    snapshot.forEach(doc=>{ads.push({id:doc.id,...doc.data()});});
-    ads.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-    if(me){render();}
-   },
-   error=>{console.error("Ads listener:",error);}
-  );
+ unsubscribeAds=db.collection("ads").onSnapshot(
+  snapshot=>{
+   ads=[];
+   snapshot.forEach(doc=>{
+    const a={id:doc.id,...doc.data()};
+    if(String(a.status||"active").toLowerCase()==="active") ads.push(a);
+   });
+   ads.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+   if(me){render();}
+  },
+  error=>{
+   console.error("Ads listener:",error);
+   const c=document.getElementById("content");
+   if(c && me) c.innerHTML=home()+`<section><p class="danger">Ads could not be refreshed. Please refresh the page.</p></section>`;
+  }
+ );
 }
 
 function render(){
@@ -308,52 +392,70 @@ function post(){
 
 let selectedImages=[];
 
-function previewImages(event){
- selectedImages=[];
- const files=[...event.target.files];
- const preview=document.getElementById("preview");
- if(!preview)return;
- preview.innerHTML="";
- files.slice(0,8).forEach(file=>{
+function imageToSmallDataUrl(file,maxSide=900,quality=.58){
+ return new Promise((resolve,reject)=>{
   const reader=new FileReader();
   reader.onload=e=>{
-   selectedImages.push(e.target.result);
-   const img=document.createElement("img");
+   const img=new Image();
+   img.onload=()=>{
+    const scale=Math.min(1,maxSide/Math.max(img.width,img.height));
+    const canvas=document.createElement("canvas");
+    canvas.width=Math.max(1,Math.round(img.width*scale));
+    canvas.height=Math.max(1,Math.round(img.height*scale));
+    const ctx=canvas.getContext("2d");
+    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    resolve(canvas.toDataURL("image/jpeg",quality));
+   };
+   img.onerror=reject;
    img.src=e.target.result;
-   preview.appendChild(img);
   };
+  reader.onerror=reject;
   reader.readAsDataURL(file);
  });
 }
 
+async function previewImages(event){
+ selectedImages=[];
+ const files=[...event.target.files].slice(0,3);
+ const preview=document.getElementById("preview");
+ if(!preview)return;
+ preview.innerHTML="";
+ for(const file of files){
+  try{
+   const data=await imageToSmallDataUrl(file);
+   selectedImages.push(data);
+   const img=document.createElement("img");
+   img.src=data;
+   preview.appendChild(img);
+  }catch(e){console.error(e);}
+ }
+}
+
 async function createAd(event){
- if(event){event.preventDefault(); event.stopPropagation();}
+ if(event){event.preventDefault();event.stopPropagation();}
  const title=document.getElementById("adTitle").value.trim();
  const price=Number(document.getElementById("adPrice").value);
  const city=document.getElementById("adCity").value.trim();
  const desc=document.getElementById("adDesc").value.trim();
  const err=document.getElementById("postErr");
  err.textContent="";
-
- if(!title||!price||!city){err.textContent="Please enter car title, price and city.";return;}
- if(!me){err.textContent="Please login first.";return;}
- if(me.role!=="admin"&&String(me.status).toLowerCase()!=="approved"){err.textContent="Your account is not approved yet.";return;}
-
+ if(!title||!price||!city){err.textContent="Please enter car title, price and city.";return false;}
+ if(!me){err.textContent="Please login first.";return false;}
+ if(me.role!=="admin"&&String(me.status).toLowerCase()!=="approved"){err.textContent="Your account is not approved yet.";return false;}
  try{
-  await db.collection("ads").add({
-   title:title,price:price,city:city,description:desc,images:selectedImages,
-   ownerId:me.uid,ownerName:me.name||me.email,status:"active",
-   createdAt:firebase.firestore.FieldValue.serverTimestamp()
-  });
+  const docData={title,price,city,description:desc,images:selectedImages.slice(0,3),ownerId:me.uid,ownerName:me.name||me.email||me.phone||"Seller",status:"active",createdAt:firebase.firestore.FieldValue.serverTimestamp()};
+  const ref=await db.collection("ads").add(docData);
   selectedImages=[];
   alert("Ad posted successfully.");
+  page="cars";
   go("cars");
+  return ref.id;
  }catch(e){
-  console.error(e);
+  console.error("createAd:",e);
   err.textContent=e.message||"Could not post ad.";
+  return false;
  }
 }
-
 function detail(id){
  const a=ads.find(x=>x.id===id);
  if(!a)return;
@@ -396,7 +498,7 @@ function profile(){
  <section>
   <div class="title"><h3>Profile</h3></div>
   <div class="list">
-   <b>${esc(me.name||"User")}</b><br>${esc(me.email||"")}<br><br>
+   <b>${esc(me.name||"User")}</b><br>${esc(me.email||me.phone||"")}<br><br>
    <span class="pill">${esc(me.role||"user")}</span>
   </div>
   <button class="btn" style="width:100%" onclick="go('myads')">My Ads</button>
