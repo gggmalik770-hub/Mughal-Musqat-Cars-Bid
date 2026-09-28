@@ -1,12 +1,9 @@
 package com.mughal.muscatcarbid;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.webkit.CookieManager;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -20,14 +17,16 @@ public class MainActivity extends Activity {
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
     private static final int FILE_CHOOSER_REQUEST = 1001;
-    private static final int CAMERA_REQUEST = 1002;
+
+    // Stable public APK download address.
+    private static final String APK_DOWNLOAD_URL =
+            "https://gggmalik770-hub.github.io/Mughal-Musqat-Cars-Bid/app-release.apk";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(com.mughal.muscatcarbid.R.layout.activity_main);
-
         webView = findViewById(com.mughal.muscatcarbid.R.id.webView);
 
         WebSettings settings = webView.getSettings();
@@ -36,16 +35,45 @@ public class MainActivity extends Activity {
         settings.setDatabaseEnabled(true);
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
-        settings.setMediaPlaybackRequiresUserGesture(false);
-        settings.setBuiltInZoomControls(false);
-        settings.setDisplayZoomControls(false);
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            public boolean shouldOverrideUrlLoading(
+                    WebView view, WebResourceRequest request) {
+
+                String url = request.getUrl().toString();
+
+                // Fix only the APK download button.
+                if (url.endsWith("/app-release.apk") ||
+                        url.endsWith("/app-debug.apk") ||
+                        url.contains("app-release.apk")) {
+
+                    Intent intent = new Intent(Intent.ACTION_VIEW,
+                            Uri.parse(APK_DOWNLOAD_URL));
+                    startActivity(intent);
+                    return true;
+                }
+
+                return false;
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+
+                // Fix only the APK download button.
+                if (url.endsWith("/app-release.apk") ||
+                        url.endsWith("/app-debug.apk") ||
+                        url.contains("app-release.apk")) {
+
+                    Intent intent = new Intent(Intent.ACTION_VIEW,
+                            Uri.parse(APK_DOWNLOAD_URL));
+                    startActivity(intent);
+                    return true;
+                }
+
                 return false;
             }
         });
@@ -54,24 +82,24 @@ public class MainActivity extends Activity {
             @Override
             public boolean onShowFileChooser(
                     WebView webView,
-                    ValueCallback<Uri[]> filePathCallback,
+                    ValueCallback<Uri[]> callback,
                     FileChooserParams fileChooserParams) {
 
                 if (MainActivity.this.filePathCallback != null) {
                     MainActivity.this.filePathCallback.onReceiveValue(null);
                 }
 
-                MainActivity.this.filePathCallback = filePathCallback;
+                MainActivity.this.filePathCallback = callback;
 
-                Intent contentIntent = new Intent(Intent.ACTION_GET_CONTENT);
-                contentIntent.addCategory(Intent.CATEGORY_OPENABLE);
-                contentIntent.setType("image/*");
-                contentIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-
-                Intent chooser = Intent.createChooser(contentIntent, "Select vehicle/listing photos");
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("image/*");
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 
                 try {
-                    startActivityForResult(chooser, FILE_CHOOSER_REQUEST);
+                    startActivityForResult(
+                            Intent.createChooser(intent, "Select photos"),
+                            FILE_CHOOSER_REQUEST);
                 } catch (Exception e) {
                     MainActivity.this.filePathCallback = null;
                     return false;
@@ -81,22 +109,13 @@ public class MainActivity extends Activity {
             }
         });
 
-        requestCameraPermission();
-
-        // IMPORTANT: Always load the NEW marketplace HTML from the APK assets.
-        // This prevents the old Mughal Muscat Car Bid screen from being embedded.
         webView.loadUrl("file:///android_asset/index.html");
     }
 
-    private void requestCameraPermission() {
-        if (android.os.Build.VERSION.SDK_INT >= 23 &&
-                checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST);
-        }
-    }
-
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(
+            int requestCode, int resultCode, Intent data) {
+
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == FILE_CHOOSER_REQUEST) {
@@ -106,6 +125,7 @@ public class MainActivity extends Activity {
                 if (data.getClipData() != null) {
                     int count = data.getClipData().getItemCount();
                     results = new Uri[count];
+
                     for (int i = 0; i < count; i++) {
                         results[i] = data.getClipData().getItemAt(i).getUri();
                     }
