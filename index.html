@@ -4,8 +4,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>Mughal Muscat Marketplace - Buy & Sell in Oman</title>
-<meta name="description" content="Mughal Muscat Marketplace - buy and sell cars, mobiles, homes, bikes, electronics, furniture and more across Oman. Post ads, contact sellers and place bids.">
+<title>Open Muscat Car Bid - سوق السيارات والمزادات في عمان</title>
+<meta name="description" content="Open Muscat Car Bid - Buy, Sell and Bid on cars across Oman. سوق السيارات والمزادات في عمان.">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://gggmalik770-hub.github.io/Mughal-Musqat-Cars-Bid/">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -340,7 +340,7 @@ function showLogin(message=""){
  document.getElementById("root").innerHTML=`
  <div class="login">
   <div class="loginbox">
-   <div class="logoBig">MUGHAL<br><span style="color:#d4af37">MUSCAT MARKETPLACE</span></div>
+   <div class="logoBig">OPEN MUSCAT<br><span style="color:#d4af37">CAR BID</span><small style="display:block;font-size:14px;margin-top:8px;color:#f3d675;direction:rtl">أوبن مسقط كار بيد</small></div>
    <p class="muted">Buy &#x2022; Sell &#x2022; Bid &#x2022; Deliver</p>
    <input class="field" id="email" type="email" placeholder="Email">
    <input class="field" id="pass" type="password" placeholder="Password">
@@ -539,7 +539,7 @@ function render(){
    <div class="brand">
     <div class="brand-mark">&#x2655;</div>
     <div>
-     <div class="logo">MUGHAL MOTORS OMAN</div>
+     <div class="logo">OPEN MUSCAT CAR BID</div><div class="sub" style="direction:rtl">أوبن مسقط كار بيد • سوق السيارات والمزادات في عمان</div>
      <div class="sub">Oman Marketplace &#x2022; Buy &#x2022; Sell &#x2022; Bid</div>
     </div>
    </div>
@@ -570,7 +570,7 @@ function go(p){
 function home(){
  return `
  <div class="hero">
-  <h2>Mughal Muscat Marketplace</h2>
+  <h2>Open Muscat Car Bid</h2><p style="direction:rtl;margin:6px 0 12px;font-size:18px">أوبن مسقط كار بيد</p>
   <p>Buy &#x2022; Sell &#x2022; Bid across Oman</p>
   <div class="row"><input class="field" id="homeSearch" style="margin:0;flex:1" placeholder="Search cars, mobiles, homes..." oninput="renderHomeSearch()"><button class="btn alt" onclick="go('cars')">Browse</button></div>
  </div>
@@ -589,7 +589,7 @@ function home(){
   <div id="homeCards" class="cards">${ads.slice(0,6).map(card).join("")}</div>
   ${ads.length?"":'<p class="muted">No listings posted yet.</p>'}
  </section>
- <section><div class="list" style="text-align:center"><b>Get the Mughal Muscat Marketplace App</b><br><small>Download the Android app directly to your phone.</small><br><a class="btn" style="display:inline-block;text-decoration:none;margin-top:8px" href="./app-release.apk" download>&#x2B07;&#xFE0F; Download APK</a></div></section>`;
+ <section><div class="list" style="text-align:center"><b>Get the Open Muscat Car Bid App</b><br><small style="direction:rtl">حمّل تطبيق أوبن مسقط كار بيد</small><br><small>Download the Android app directly to your phone.</small><br><a class="btn" style="display:inline-block;text-decoration:none;margin-top:8px" href="./app-release.apk" download>&#x2B07;&#xFE0F; Download APK</a></div></section>`;
 }
 
 function renderHomeSearch(){
