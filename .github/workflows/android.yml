@@ -17,60 +17,111 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
-      - name: Extract project
+      - name: Create Android project from repository files
         run: |
-          mkdir -p build_project
-          unzip -q MughalMuscatCarBid_Complete_Android_Project.zip -d build_project
-          HTML_FILE=$(find build_project -path "*/app/src/main/assets/index.html" -print -quit)
-          echo "HTML_FILE=$HTML_FILE"
-          if [ -z "$HTML_FILE" ]; then
-            echo "ERROR: Android assets/index.html was not found"
-            find build_project -type f -name "index.html" -print
-            exit 1
-          fi
-          cp index.html "$HTML_FILE"
-          echo "Marketplace index.html copied into Android project."
-          echo "Project files:"
-          find build_project -maxdepth 3 -type f | head -100
+          mkdir -p build_project/app/src/main/java/com/mughal/muscatcarbid
+          mkdir -p build_project/app/src/main/assets
+          mkdir -p build_project/app/src/main/res/layout
+          mkdir -p build_project/app/src/main/res/values
+          mkdir -p build_project/app/src/main/res/mipmap-hdpi
 
-      - name: Find Android project
-        run: |
-          PROJECT_DIR=$(find build_project \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit | xargs dirname)
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          cat > build_project/settings.gradle <<'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "MughalMuscatMarketplace"
+          include(":app")
+          EOF
+
+          cat > build_project/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application' version '8.6.1' apply false
+          }
+          EOF
+
+          cat > build_project/app/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application'
+          }
+
+          android {
+              namespace 'com.mughal.muscatcarbid'
+              compileSdk 35
+
+              defaultConfig {
+                  applicationId 'com.mughal.muscatcarbid'
+                  minSdk 24
+                  targetSdk 35
+                  versionCode 2
+                  versionName '2.0'
+              }
+          }
+
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.7.0'
+              implementation 'androidx.webkit:webkit:1.12.1'
+          }
+          EOF
+
+          cp MainActivity.java build_project/app/src/main/java/com/mughal/muscatcarbid/MainActivity.java
+          cp index.html build_project/app/src/main/assets/index.html
+          cp activity_main.xml build_project/app/src/main/res/layout/activity_main.xml
+          cp styles.xml build_project/app/src/main/res/values/styles.xml
+          cp ic_launcher.png build_project/app/src/main/res/mipmap-hdpi/ic_launcher.png
+
+          cat > build_project/app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET"/>
+              <uses-permission android:name="android.permission.CAMERA"/>
+              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+
+              <application
+                  android:theme="@style/AppTheme"
+                  android:label="Mughal Muscat Marketplace"
+                  android:allowBackup="true"
+                  android:supportsRtl="true">
+                  <activity
+                      android:name=".MainActivity"
+                      android:screenOrientation="portrait"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+          echo "Android project created."
+          echo "Marketplace title:"
+          grep -o '<title>[^<]*' build_project/app/src/main/assets/index.html | head -1
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.7'
-
-      - name: Fix Kotlin duplicate dependencies
-        run: |
-          cat > "$RUNNER_TEMP/force-kotlin.gradle" <<'EOF'
-          allprojects {
-            configurations.all {
-              resolutionStrategy.eachDependency { details ->
-                if (details.requested.group == "org.jetbrains.kotlin") {
-                  details.useVersion "1.8.22"
-                }
-              }
-            }
-          }
-          EOF
+          gradle-version: "8.7"
 
       - name: Build APK
         run: |
-          cd "$PROJECT_DIR"
-          if [ -f "./gradlew" ]; then
-            chmod +x ./gradlew
-            ./gradlew --init-script "$RUNNER_TEMP/force-kotlin.gradle" assembleDebug
-          else
-            gradle --init-script "$RUNNER_TEMP/force-kotlin.gradle" assembleDebug
-          fi
+          cd build_project
+          gradle --no-daemon assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Mughal-Muscat-Marketplace-APK
-          path: "**/build/outputs/apk/debug/*.apk"
+          path: "build_project/app/build/outputs/apk/debug/app-debug.apk"
