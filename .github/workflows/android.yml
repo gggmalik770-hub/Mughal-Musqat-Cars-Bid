@@ -23,6 +23,15 @@ jobs:
         run: |
           mkdir -p build_project
           unzip -q MughalMuscatCarBid_Complete_Android_Project.zip -d build_project
+          HTML_FILE=$(find build_project -path "*/app/src/main/assets/index.html" -print -quit)
+          echo "HTML_FILE=$HTML_FILE"
+          if [ -z "$HTML_FILE" ]; then
+            echo "ERROR: Android assets/index.html was not found"
+            find build_project -type f -name "index.html" -print
+            exit 1
+          fi
+          cp index.html "$HTML_FILE"
+          echo "Marketplace index.html copied into Android project."
           echo "Project files:"
           find build_project -maxdepth 3 -type f | head -100
 
@@ -63,5 +72,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Mughal-Muscat-Car-Bid-APK
+          name: Mughal-Muscat-Marketplace-APK
           path: "**/build/outputs/apk/debug/*.apk"
