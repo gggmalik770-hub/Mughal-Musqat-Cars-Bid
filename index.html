@@ -5,7 +5,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Mughal Muscat Car Bid</title>
-<meta name="google-site-verification" content="JewVPxFIC8AhQoo1EPgO52YonuktkYqjvAm1xRx_nMY" />
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -136,6 +135,7 @@ function showRegister(){
 async function register(){
  const name=document.getElementById("rname").value.trim();
  const email=document.getElementById("remail").value.trim();
+ const phone=(document.getElementById("rphone")?.value||"").trim();
  const pass=document.getElementById("rpass").value;
  const err=document.getElementById("rerr");
 
@@ -145,7 +145,7 @@ async function register(){
  try{
   const cred=await auth.createUserWithEmailAndPassword(email,pass);
   await db.collection("users").doc(cred.user.uid).set({
-   name:name,email:email,role:"user",status:"pending",
+   name:name,email:email,phone:phone,role:"user",status:"pending",
    createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
   await auth.signOut();
@@ -444,7 +444,7 @@ async function createAd(event){
  if(!me){err.textContent="Please login first.";return false;}
  if(me.role!=="admin"&&String(me.status).toLowerCase()!=="approved"){err.textContent="Your account is not approved yet.";return false;}
  try{
-  const docData={title,price,city,description:desc,images:selectedImages.slice(0,3),ownerId:me.uid,ownerName:me.name||me.email||me.phone||"Seller",status:"active",createdAt:firebase.firestore.FieldValue.serverTimestamp()};
+  const docData={title,price,city,description:desc,images:selectedImages.slice(0,3),ownerId:me.uid,ownerName:me.name||me.email||me.phone||"Seller",ownerPhone:me.phone||"",status:"active",createdAt:firebase.firestore.FieldValue.serverTimestamp()};
   const ref=await db.collection("ads").add(docData);
   selectedImages=[];
   alert("Ad posted successfully.");
@@ -457,12 +457,17 @@ async function createAd(event){
   return false;
  }
 }
-function detail(id){
+async function detail(id){
  const a=ads.find(x=>x.id===id);
  if(!a)return;
  page="detail";
  const c=document.getElementById("content");
  if(!c)return;
+ let sellerPhone=a.ownerPhone||"";
+ if(a.ownerId){
+  try{const u=await getUserProfile(a.ownerId); if(u&&u.phone)sellerPhone=u.phone;}catch(e){console.warn(e);}
+ }
+ const safePhone=String(sellerPhone||"").replace(/[^0-9+]/g,"");
  c.innerHTML=`
  <section>
   <button class="btn" onclick="go('cars')">&#x2190; Back</button>
@@ -471,8 +476,9 @@ function detail(id){
   <div class="price">OMR ${Number(a.price||0).toLocaleString()}</div>
   <p>&#x1F4CD; ${esc(a.city||"Muscat")}</p>
   <p>${esc(a.description||"No description")}</p>
-  <div class="list"><b>Seller</b><br>${esc(a.ownerName||"Seller")}</div>
-  <button class="btn" style="width:100%" onclick="placeBid('${esc(a.id)}')">Place Bid</button>
+  <div class="list"><b>Seller</b><br>${esc(a.ownerName||"Seller")}<br>${safePhone?`<b>Mobile:</b> ${esc(sellerPhone)}`:"<span class=\"muted\">Seller mobile not added yet.</span>"}</div>
+  ${safePhone?`<div class="row" style="gap:8px;margin-top:10px"><a class="btn" style="flex:1;text-align:center;text-decoration:none" href="tel:${esc(safePhone)}">&#x1F4DE; Call</a><a class="btn alt" style="flex:1;text-align:center;text-decoration:none" href="sms:${esc(safePhone)}">&#x1F4AC; SMS</a></div>`:""}
+  <button class="btn" style="width:100%;margin-top:10px" onclick="placeBid('${esc(a.id)}')">Place Bid</button>
  </section>`;
 }
 
@@ -494,15 +500,28 @@ async function placeBid(adId){
  }
 }
 
+async function saveMyPhone(){
+ const input=document.getElementById("myPhone");
+ const phone=(input?.value||"").trim();
+ try{
+  await db.collection("users").doc(me.uid).set({phone:phone},{merge:true});
+  me.phone=phone;
+  alert("Mobile number saved.");
+ }catch(e){alert(e.message||"Could not save mobile number.");}
+}
+
 function profile(){
  return `
  <section>
   <div class="title"><h3>Profile</h3></div>
   <div class="list">
-   <b>${esc(me.name||"User")}</b><br>${esc(me.email||me.phone||"")}<br><br>
+   <b>${esc(me.name||"User")}</b><br>${esc(me.email||"")}<br><br>
+   <label>Mobile number for buyers</label>
+   <input class="field" id="myPhone" type="tel" value="${esc(me.phone||"")}" placeholder="e.g. +968XXXXXXXX">
+   <button class="btn alt" style="width:100%" onclick="saveMyPhone()">Save Mobile Number</button><br><br>
    <span class="pill">${esc(me.role||"user")}</span>
   </div>
-  <button class="btn" style="width:100%" onclick="go('myads')">My Ads</button>
+  <button class="btn" style="width:100%" onclick="go('myads')">My Ads &amp; Bids</button>
   ${me.role==="admin"?`<button class="btn" style="width:100%" onclick="go('admin')">Admin Panel</button>`:""}
   <button class="btn red" style="width:100%" onclick="logout()">Logout</button>
  </section>`;
@@ -510,17 +529,23 @@ function profile(){
 
 async function myAds(){
  const c=document.getElementById("content");
- c.innerHTML=`<section><h3>My Ads</h3><div class="loading">Loading...</div></section>`;
+ c.innerHTML=`<section><h3>My Ads &amp; Bids</h3><div class="loading">Loading...</div></section>`;
  try{
   const snap=await db.collection("ads").where("ownerId","==",me.uid).get();
   let list="";
-  snap.forEach(doc=>{
+  for(const doc of snap.docs){
    const a={id:doc.id,...doc.data()};
-   list+=`<div class="list"><b>${esc(a.title)}</b><div class="price">OMR ${Number(a.price||0).toLocaleString()}</div><small>${esc(a.city||"Muscat")}</small></div>`;
-  });
-  c.innerHTML=`<section><h3>My Ads</h3>${list||'<p class="muted">You have no ads yet.</p>'}<button class="btn" onclick="go('profile')">Back</button></section>`;
+   const bids=await db.collection("ads").doc(a.id).collection("bids").orderBy("createdAt","desc").get();
+   let bidsHtml="<p class=\"muted\">No bids yet.</p>";
+   if(!bids.empty){
+    bidsHtml=bids.docs.map(b=>{const x=b.data();return `<div class="list" style="margin-top:8px"><b>Bid: OMR ${Number(x.amount||0).toLocaleString()}</b><br><small>Bidder: ${esc(x.userName||"User")}</small></div>`;}).join("");
+   }
+   list+=`<div class="list"><b>${esc(a.title)}</b><div class="price">OMR ${Number(a.price||0).toLocaleString()}</div><small>${esc(a.city||"Muscat")}</small><h4 style="margin-bottom:6px">Bids (${bids.size})</h4>${bidsHtml}</div>`;
+  }
+  c.innerHTML=`<section><h3>My Ads &amp; Bids</h3>${list||'<p class="muted">You have no ads yet.</p>'}<button class="btn" onclick="go('profile')">Back</button></section>`;
  }catch(e){
-  c.innerHTML=`<section><p class="danger">${esc(e.message||"Could not load ads.")}</p><button class="btn" onclick="go('profile')">Back</button></section>`;
+  console.error(e);
+  c.innerHTML=`<section><p class="danger">${esc(e.message||"Could not load ads and bids.")}</p><button class="btn" onclick="go('profile')">Back</button></section>`;
  }
 }
 
