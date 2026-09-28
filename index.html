@@ -4,7 +4,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>Mughal Muscat Car Bid</title>
+<title>Mughal Muscat Marketplace - Buy & Sell in Oman</title>
+<meta name="description" content="Mughal Muscat Marketplace - buy and sell cars, mobiles, homes, bikes, electronics, furniture and more across Oman. Post ads, contact sellers and place bids.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://gggmalik770-hub.github.io/Mughal-Musqat-Cars-Bid/">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -288,12 +291,12 @@ function render(){
  <div class="app page">
   <header>
    <div class="logo">MUGHAL MUSCAT CAR BID</div>
-   <div class="sub">Muscat, Oman &#x2022; Buy &#x2022; Sell &#x2022; Bid &#x2022; Deliver</div>
+   <div class="sub">Oman Marketplace &#x2022; Buy &#x2022; Sell &#x2022; Bid</div>
   </header>
   <div id="content"></div>
   <div class="nav">
    <button onclick="go('home')">&#x2302;<br>Home</button>
-   <button onclick="go('cars')">&#x1F697;<br>Cars</button>
+   <button onclick="go('cars')">&#x1F50E;<br>Browse</button>
    <button onclick="go('post')">&#xFF0B;<br>Post Ad</button>
    <button onclick="go('profile')">&#x2659;<br>Profile</button>
   </div>
@@ -316,29 +319,36 @@ function go(p){
 function home(){
  return `
  <div class="hero">
-  <h2>Find Your Dream Car</h2>
-  <p>Bid &#x2022; Buy &#x2022; Sell &#x2022; Deliver across Oman</p>
-  <button class="btn alt" onclick="go('cars')">View Cars</button>
+  <h2>Mughal Muscat Marketplace</h2>
+  <p>Buy &#x2022; Sell &#x2022; Bid across Oman</p>
+  <div class="row"><input class="field" id="homeSearch" style="margin:0;flex:1" placeholder="Search cars, mobiles, homes..." oninput="renderHomeSearch()"><button class="btn alt" onclick="go('cars')">Browse</button></div>
  </div>
  <div class="grid">
-  <div class="cat" onclick="go('cars')"><b>&#x1F697;</b>Cars</div>
-  <div class="cat"><b>&#x1F3CD;&#xFE0F;</b>Bikes</div>
-  <div class="cat"><b>&#x1F4F1;</b>Mobiles</div>
-  <div class="cat"><b>&#x1F4BB;</b>Electronics</div>
-  <div class="cat"><b>&#x1F6CB;&#xFE0F;</b>Furniture</div>
-  <div class="cat"><b>&#x1F3E0;</b>Property</div>
-  <div class="cat"><b>&#x1F4BC;</b>Jobs</div>
-  <div class="cat"><b>&#x2022;&#x2022;&#x2022;</b>More</div>
+  <div class="cat" onclick="filterCategory('Cars')"><b>&#x1F697;</b>Cars</div>
+  <div class="cat" onclick="filterCategory('Mobiles')"><b>&#x1F4F1;</b>Mobiles</div>
+  <div class="cat" onclick="filterCategory('Property')"><b>&#x1F3E0;</b>Property</div>
+  <div class="cat" onclick="filterCategory('Bikes')"><b>&#x1F3CD;&#xFE0F;</b>Bikes</div>
+  <div class="cat" onclick="filterCategory('Electronics')"><b>&#x1F4BB;</b>Electronics</div>
+  <div class="cat" onclick="filterCategory('Furniture')"><b>&#x1F6CB;&#xFE0F;</b>Furniture</div>
+  <div class="cat" onclick="filterCategory('Jobs')"><b>&#x1F4BC;</b>Jobs</div>
+  <div class="cat" onclick="filterCategory('Other')"><b>&#x2022;&#x2022;&#x2022;</b>More</div>
  </div>
  <section>
-  <div class="title">
-   <h3>Featured Cars</h3>
-   <button class="btn" onclick="go('cars')">See All</button>
-  </div>
-  <div class="cards">${ads.slice(0,4).map(card).join("")}</div>
-  ${ads.length?"":'<p class="muted">No cars posted yet.</p>'}
- </section>`;
+  <div class="title"><h3>Latest Listings</h3><button class="btn" onclick="go('cars')">See All</button></div>
+  <div id="homeCards" class="cards">${ads.slice(0,6).map(card).join("")}</div>
+  ${ads.length?"":'<p class="muted">No listings posted yet.</p>'}
+ </section>
+ <section><div class="list" style="text-align:center"><b>Get the Mughal Muscat Marketplace App</b><br><small>Download the Android app directly to your phone.</small><br><a class="btn" style="display:inline-block;text-decoration:none;margin-top:8px" href="./app-release.apk" download>&#x2B07;&#xFE0F; Download APK</a></div></section>`;
 }
+
+function renderHomeSearch(){
+ const q=(document.getElementById('homeSearch')?.value||'').toLowerCase().trim();
+ const box=document.getElementById('homeCards'); if(!box)return;
+ const arr=ads.filter(a=>!q||[a.title,a.description,a.city,a.category].some(v=>String(v||'').toLowerCase().includes(q))).slice(0,6);
+ box.innerHTML=arr.map(card).join('')||'<p class="muted">No matching listings.</p>';
+}
+
+function filterCategory(cat){ go('cars'); setTimeout(()=>{ const s=document.getElementById('categoryFilter'); if(s){s.value=cat; renderListings();}},0); }
 
 function card(a){
  const image=a.images&&a.images.length?`<img src="${a.images[0]}" alt="">`:"&#x1F698;";
@@ -356,34 +366,33 @@ function card(a){
 function cars(){
  return `
  <section>
-  <div class="title">
-   <h3>Cars</h3>
-   <button class="btn" onclick="go('post')">&#xFF0B; Post Ad</button>
-  </div>
-  ${ads.length?ads.map(a=>`
-   <div class="list" onclick="detail('${esc(a.id)}')">
-    <div class="row">
-     <div style="width:90px;font-size:40px">
-      ${a.images&&a.images.length?`<img src="${a.images[0]}" style="width:90px;height:70px;object-fit:cover;border-radius:8px" alt="">`:"&#x1F698;"}
-     </div>
-     <div>
-      <b>${esc(a.title)}</b>
-      <div class="price">OMR ${Number(a.price||0).toLocaleString()}</div>
-      <small>&#x1F4CD; ${esc(a.city||"Muscat")}</small>
-     </div>
-    </div>
-   </div>`).join(""):'<p class="muted">No cars posted yet.</p>'}
+  <div class="title"><h3>Browse Listings</h3><button class="btn" onclick="go('post')">&#xFF0B; Post Ad</button></div>
+  <input class="field" id="searchBox" placeholder="Search anything..." oninput="renderListings()">
+  <select class="field" id="categoryFilter" onchange="renderListings()">
+   <option value="">All Categories</option><option>Cars</option><option>Mobiles</option><option>Property</option><option>Bikes</option><option>Electronics</option><option>Furniture</option><option>Jobs</option><option>Other</option>
+  </select>
+  <div id="listingBox"></div>
  </section>`;
+}
+
+function renderListings(){
+ const box=document.getElementById('listingBox'); if(!box)return;
+ const q=(document.getElementById('searchBox')?.value||'').toLowerCase().trim();
+ const cat=document.getElementById('categoryFilter')?.value||'';
+ const arr=ads.filter(a=>{const hay=[a.title,a.description,a.city,a.category].map(v=>String(v||'').toLowerCase()).join(' ');return (!q||hay.includes(q))&&(!cat||String(a.category||'Cars')===cat);});
+ box.innerHTML=arr.length?arr.map(a=>`<div class="list" onclick="detail('${esc(a.id)}')"><div class="row"><div style="width:90px;font-size:40px">${a.images&&a.images.length?`<img src="${a.images[0]}" style="width:90px;height:70px;object-fit:cover;border-radius:8px" alt="">`:"&#x1F4E6;"}</div><div><span class="pill">${esc(a.category||'Cars')}</span><br><b>${esc(a.title)}</b><div class="price">OMR ${Number(a.price||0).toLocaleString()}</div><small>&#x1F4CD; ${esc(a.city||'Muscat')}</small></div></div></div>`).join(''):'<p class="muted">No listings found.</p>';
 }
 
 function post(){
  return `
  <section>
-  <div class="title"><h3>Post Your Car</h3></div>
-  <input class="field" id="adTitle" placeholder="Car title e.g. Toyota Camry 2020">
+  <div class="title"><h3>Post an Ad</h3></div>
+  <select class="field" id="adCategory"><option value="">Choose category</option><option>Cars</option><option>Mobiles</option><option>Property</option><option>Bikes</option><option>Electronics</option><option>Furniture</option><option>Jobs</option><option>Other</option></select>
+  <input class="field" id="adTitle" placeholder="Title e.g. Toyota Camry / iPhone / House for Sale">
   <input class="field" id="adPrice" type="number" placeholder="Price OMR">
-  <input class="field" id="adCity" placeholder="City e.g. Muscat">
-  <textarea class="field" id="adDesc" rows="4" placeholder="Description"></textarea>
+  <input class="field" id="adCity" placeholder="City / Area e.g. Muscat, Al Khoudh">
+  <input class="field" id="adPhone" type="tel" placeholder="Mobile number e.g. +968XXXXXXXX" value="${esc(me?.phone||'')}">
+  <textarea class="field" id="adDesc" rows="5" placeholder="Description and details"></textarea>
   <input class="field" id="adImages" type="file" accept="image/*" multiple onchange="previewImages(event)">
   <div id="preview" class="gallery"></div>
   <button type="button" class="btn" style="width:100%" onclick="createAd(event)">Post Ad</button>
@@ -434,22 +443,25 @@ async function previewImages(event){
 
 async function createAd(event){
  if(event){event.preventDefault();event.stopPropagation();}
+ const category=document.getElementById("adCategory").value.trim();
  const title=document.getElementById("adTitle").value.trim();
  const price=Number(document.getElementById("adPrice").value);
  const city=document.getElementById("adCity").value.trim();
+ const phone=(document.getElementById("adPhone")?.value||me.phone||"").trim();
  const desc=document.getElementById("adDesc").value.trim();
  const err=document.getElementById("postErr");
  err.textContent="";
- if(!title||!price||!city){err.textContent="Please enter car title, price and city.";return false;}
+ if(!category||!title||!price||!city||!phone){err.textContent="Please choose a category and enter title, price, location and mobile number.";return false;}
  if(!me){err.textContent="Please login first.";return false;}
  if(me.role!=="admin"&&String(me.status).toLowerCase()!=="approved"){err.textContent="Your account is not approved yet.";return false;}
  try{
-  const docData={title,price,city,description:desc,images:selectedImages.slice(0,3),ownerId:me.uid,ownerName:me.name||me.email||me.phone||"Seller",ownerPhone:me.phone||"",status:"active",createdAt:firebase.firestore.FieldValue.serverTimestamp()};
+  const docData={category,title,price,city,description:desc,images:selectedImages.slice(0,3),ownerId:me.uid,ownerName:me.name||me.email||me.phone||"Seller",ownerPhone:phone,status:"active",createdAt:firebase.firestore.FieldValue.serverTimestamp()};
   const ref=await db.collection("ads").add(docData);
   selectedImages=[];
   alert("Ad posted successfully.");
   page="cars";
   go("cars");
+  setTimeout(renderListings,100);
   return ref.id;
  }catch(e){
   console.error("createAd:",e);
