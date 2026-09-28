@@ -25,7 +25,12 @@ jobs:
           mkdir -p build_project/app/src/main/assets
           mkdir -p build_project/app/src/main/res/layout
           mkdir -p build_project/app/src/main/res/values
+
+          mkdir -p build_project/app/src/main/res/mipmap-mdpi
           mkdir -p build_project/app/src/main/res/mipmap-hdpi
+          mkdir -p build_project/app/src/main/res/mipmap-xhdpi
+          mkdir -p build_project/app/src/main/res/mipmap-xxhdpi
+          mkdir -p build_project/app/src/main/res/mipmap-xxxhdpi
 
           cat > build_project/settings.gradle <<'EOF'
           pluginManagement {
@@ -35,6 +40,7 @@ jobs:
                   gradlePluginPortal()
               }
           }
+
           dependencyResolutionManagement {
               repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
               repositories {
@@ -42,6 +48,7 @@ jobs:
                   mavenCentral()
               }
           }
+
           rootProject.name = "MughalMuscatMarketplace"
           include(":app")
           EOF
@@ -93,13 +100,23 @@ jobs:
           EOF
 
           cp MainActivity.java build_project/app/src/main/java/com/mughal/muscatcarbid/MainActivity.java
+
           cp index.html build_project/app/src/main/assets/index.html
+
           cp activity_main.xml build_project/app/src/main/res/layout/activity_main.xml
+
           cp styles.xml build_project/app/src/main/res/values/styles.xml
+
+          cp ic_launcher.png build_project/app/src/main/res/mipmap-mdpi/ic_launcher.png
           cp ic_launcher.png build_project/app/src/main/res/mipmap-hdpi/ic_launcher.png
+          cp ic_launcher.png build_project/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+          cp ic_launcher.png build_project/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+          cp ic_launcher.png build_project/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
 
           cat > build_project/app/src/main/AndroidManifest.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
               <uses-permission android:name="android.permission.INTERNET"/>
               <uses-permission android:name="android.permission.CAMERA"/>
               <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
@@ -108,17 +125,24 @@ jobs:
                   android:theme="@style/AppTheme"
                   android:label="Mughal Muscat Marketplace"
                   android:allowBackup="true"
-                  android:supportsRtl="true">
+                  android:supportsRtl="true"
+                  android:icon="@mipmap/ic_launcher"
+                  android:roundIcon="@mipmap/ic_launcher">
+
                   <activity
                       android:name=".MainActivity"
                       android:screenOrientation="portrait"
                       android:exported="true">
+
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN"/>
                           <category android:name="android.intent.category.LAUNCHER"/>
                       </intent-filter>
+
                   </activity>
+
               </application>
+
           </manifest>
           EOF
 
@@ -130,10 +154,4 @@ jobs:
       - name: Build APK
         run: |
           cd build_project
-          gradle --no-daemon assembleDebug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Mughal-Muscat-Marketplace-APK
-          path: "build_project/app/build/outputs/apk/debug/app-debug.apk"
+          gradle --
