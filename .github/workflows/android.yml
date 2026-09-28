@@ -52,6 +52,12 @@ jobs:
           }
           EOF
 
+          cat > build_project/gradle.properties <<'EOF'
+          android.useAndroidX=true
+          android.enableJetifier=true
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          EOF
+
           cat > build_project/app/build.gradle <<'EOF'
           plugins {
               id 'com.android.application'
@@ -105,10 +111,6 @@ jobs:
               </application>
           </manifest>
           EOF
-
-          echo "Android project created."
-          echo "Marketplace title:"
-          grep -o '<title>[^<]*' build_project/app/src/main/assets/index.html | head -1
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
